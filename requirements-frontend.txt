@@ -1,0 +1,3 @@
+pandas==3.0.3
+requests==2.34.2
+streamlit==1.59.2

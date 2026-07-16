@@ -1,0 +1,20 @@
+[project]
+name = "databridge-ai"
+version = "1.0.0"
+description = "A read-only natural-language interface for PostgreSQL"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "SIM", "UP"]
+ignore = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"

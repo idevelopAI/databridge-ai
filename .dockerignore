@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.git
+.github/
+.gitignore
+docs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+postgres_data/
+tests/
+.DS_Store

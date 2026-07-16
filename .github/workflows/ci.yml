@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install --requirement requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Check formatting
+        run: ruff format --check .
+
+      - name: Compile Python
+        run: >-
+          python -m compileall -q agent.py app.py config.py csv_export.py
+          database.py main.py query_log.py rate_limit.py result_formatting.py
+          schema_service.py sql_safety.py sql_tools.py tests
+
+      - name: Run tests
+        run: pytest -q
+
+  containers:
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      AI_AGENT_DB_PASSWORD: ci-readonly-password
+      APP_SECRET_TOKEN: ci-app-token
+      GOOGLE_API_KEY: ci-model-key
+      PGADMIN_DEFAULT_PASSWORD: ci-pgadmin-password
+      POSTGRES_PASSWORD: ci-postgres-password
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate Compose
+        run: docker compose config --quiet
+
+      - name: Start application
+        run: docker compose up --detach --build --wait
+
+      - name: Verify local services
+        run: |
+          curl --fail --silent http://localhost:8000/health
+          curl --fail --silent http://localhost:8501/_stcore/health
+          curl --fail --silent \
+            --header "X-API-Key: $APP_SECRET_TOKEN" \
+            http://localhost:8000/api/v1/schema \
+            | grep --quiet '"employees"'
+
+      - name: Show service logs
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop application
+        if: always()
+        run: docker compose down --volumes
