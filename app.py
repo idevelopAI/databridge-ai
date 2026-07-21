@@ -93,6 +93,9 @@ TEXT = {
         "rate_limited": "Zu viele Anfragen. Bitte warte kurz und versuche es erneut.",
         "unavailable": "Der Datenbank-Agent ist noch nicht bereit.",
         "request_failed": "Die Anfrage konnte nicht verarbeitet werden.",
+        "restricted": (
+            "Diese Anfrage betrifft durch die Datenschutzrichtlinie gesperrte Daten."
+        ),
         "connection_failed": "Das Backend ist nicht erreichbar.",
         "table": "Tabelle",
         "chart": "Diagramm",
@@ -101,6 +104,12 @@ TEXT = {
         "no_rows": "Die Abfrage hat keine Zeilen zurückgegeben.",
         "rows": "Zeilen",
         "truncated": "Ergebnis gekürzt",
+        "correct": "Korrekt",
+        "incorrect": "Falsch",
+        "feedback_saved": "Feedback gespeichert",
+        "feedback_failed": "Feedback konnte nicht gespeichert werden.",
+        "feedback": "Feedback",
+        "export_feedback": "Geprüfte Beispiele exportieren",
         "examples_list": [
             "Wer verdient am meisten im Engineering?",
             "Wie hoch ist das durchschnittliche Gehalt pro Abteilung?",
@@ -122,6 +131,7 @@ TEXT = {
         "rate_limited": "Too many requests. Wait briefly and try again.",
         "unavailable": "The database agent is not ready yet.",
         "request_failed": "The request could not be processed.",
+        "restricted": "This request includes data blocked by the privacy policy.",
         "connection_failed": "The backend is unavailable.",
         "table": "Table",
         "chart": "Chart",
@@ -130,6 +140,12 @@ TEXT = {
         "no_rows": "The query returned no rows.",
         "rows": "rows",
         "truncated": "Result truncated",
+        "correct": "Correct",
+        "incorrect": "Incorrect",
+        "feedback_saved": "Feedback saved",
+        "feedback_failed": "Feedback could not be saved.",
+        "feedback": "Feedback",
+        "export_feedback": "Export reviewed examples",
         "examples_list": [
             "Who earns the most in Engineering?",
             "What is the average salary by department?",
@@ -143,6 +159,11 @@ BACKEND_SCHEMA_URL = os.environ.get(
     "BACKEND_SCHEMA_URL",
     BACKEND_URL.replace("/api/v1/query", "/api/v1/schema"),
 )
+BACKEND_FEEDBACK_URL = os.environ.get(
+    "BACKEND_FEEDBACK_URL",
+    BACKEND_URL.replace("/api/v1/query", "/api/v1/feedback"),
+)
+BACKEND_FEEDBACK_EXPORT_URL = f"{BACKEND_FEEDBACK_URL}/export"
 APP_SECRET_TOKEN = os.environ.get("APP_SECRET_TOKEN")
 
 if not APP_SECRET_TOKEN:
@@ -188,6 +209,30 @@ def chart_columns(frame: pd.DataFrame) -> tuple[str, str] | None:
     if not numeric_columns or not label_columns:
         return None
     return label_columns[0], numeric_columns[0]
+
+
+def submit_query_feedback(question: str, generated_sql: str, rating: str) -> None:
+    response = requests.post(
+        BACKEND_FEEDBACK_URL,
+        json={
+            "question": question,
+            "generated_sql": generated_sql,
+            "feedback": rating,
+        },
+        headers=api_headers(),
+        timeout=10,
+    )
+    response.raise_for_status()
+
+
+def load_feedback_export() -> bytes:
+    response = requests.get(
+        BACKEND_FEEDBACK_EXPORT_URL,
+        headers=api_headers(),
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.content
 
 
 def render_execution(
@@ -258,8 +303,59 @@ def render_assistant_message(message: dict, message_index: int, labels: dict) ->
             message_index=message_index,
             labels=labels,
         )
+    metadata = []
     if message.get("duration_ms"):
-        st.caption(f"{message['duration_ms']} ms")
+        metadata.append(f"{message['duration_ms']} ms")
+    if message.get("model_duration_ms"):
+        metadata.append(f"model {message['model_duration_ms']} ms")
+    if message.get("tool_call_count"):
+        metadata.append(f"{message['tool_call_count']} tools")
+    token_count = message.get("input_tokens", 0) + message.get("output_tokens", 0)
+    if token_count:
+        metadata.append(f"{token_count} tokens")
+    if message.get("request_id"):
+        metadata.append(f"request {message['request_id'][:8]}")
+    if metadata:
+        st.caption(" · ".join(metadata))
+
+    executions = message.get("executions", [])
+    question = message.get("question")
+    if not executions or not question:
+        return
+    if message.get("feedback"):
+        st.caption(labels["feedback_saved"])
+        return
+
+    correct_column, incorrect_column, _ = st.columns([1, 1, 4])
+    selected_rating = None
+    with correct_column:
+        if st.button(
+            labels["correct"],
+            icon=":material/thumb_up:",
+            key=f"feedback-correct-{message_index}",
+            width="stretch",
+        ):
+            selected_rating = "correct"
+    with incorrect_column:
+        if st.button(
+            labels["incorrect"],
+            icon=":material/thumb_down:",
+            key=f"feedback-incorrect-{message_index}",
+            width="stretch",
+        ):
+            selected_rating = "incorrect"
+
+    if selected_rating:
+        try:
+            submit_query_feedback(
+                question,
+                executions[-1].get("sql", ""),
+                selected_rating,
+            )
+            message["feedback"] = selected_rating
+            st.rerun()
+        except requests.RequestException:
+            st.warning(labels["feedback_failed"])
 
 
 if "messages" not in st.session_state:
@@ -329,6 +425,23 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
+    st.divider()
+    st.markdown(f"#### {labels['feedback']}")
+    try:
+        feedback_export = load_feedback_export()
+        st.download_button(
+            labels["export_feedback"],
+            data=feedback_export,
+            file_name="databridge-reviewed-examples.jsonl",
+            mime="application/x-ndjson",
+            icon=":material/download:",
+            width="stretch",
+            key="export-feedback",
+            on_click="ignore",
+        )
+    except requests.RequestException:
+        st.caption(labels["feedback_failed"])
+
 st.title("DataBridge AI")
 st.caption(labels["tagline"])
 
@@ -382,15 +495,23 @@ if prompt:
                     "content": payload.get("answer", labels["request_failed"]),
                     "executions": payload.get("executions", []),
                     "duration_ms": payload.get("duration_ms", 0),
+                    "request_id": payload.get("request_id", ""),
+                    "model_duration_ms": payload.get("model_duration_ms", 0),
+                    "tool_call_count": payload.get("tool_call_count", 0),
+                    "input_tokens": payload.get("input_tokens", 0),
+                    "output_tokens": payload.get("output_tokens", 0),
+                    "question": prompt,
                 }
+                st.session_state.messages.append(assistant_message)
                 render_assistant_message(
                     assistant_message,
-                    len(st.session_state.messages),
+                    len(st.session_state.messages) - 1,
                     labels,
                 )
-                st.session_state.messages.append(assistant_message)
             elif response.status_code == 401:
                 st.error(labels["unauthorized"])
+            elif response.status_code == 403:
+                st.warning(labels["restricted"])
             elif response.status_code == 429:
                 st.warning(labels["rate_limited"])
             elif response.status_code == 503:

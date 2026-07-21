@@ -29,7 +29,7 @@ def _offline_case(
     include_sql: bool,
 ) -> dict[str, Any]:
     started_at = perf_counter()
-    execution = execute_read_only_query(case.expected_sql)
+    execution = execute_read_only_query(case.expected_sql, mask_results=False)
     duration_ms = round((perf_counter() - started_at) * 1000)
     if "error" in execution:
         return {

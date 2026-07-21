@@ -56,7 +56,7 @@ def test_offline_report_omits_sql_by_default(monkeypatch):
     case = load_dataset(Path("evaluation/cases.json")).cases[0]
     monkeypatch.setattr(
         "evaluation.run.execute_read_only_query",
-        lambda query: {
+        lambda query, **kwargs: {
             "columns": case.expected.columns,
             "rows": case.expected.rows,
         },
@@ -72,7 +72,7 @@ def test_offline_report_includes_sql_only_when_requested(monkeypatch):
     case = load_dataset(Path("evaluation/cases.json")).cases[0]
     monkeypatch.setattr(
         "evaluation.run.execute_read_only_query",
-        lambda query: {
+        lambda query, **kwargs: {
             "columns": case.expected.columns,
             "rows": case.expected.rows,
         },

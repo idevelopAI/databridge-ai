@@ -9,12 +9,16 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --requirement requirements.txt
 
-COPY agent.py config.py database.py main.py query_log.py query_plan.py rate_limit.py ./
+COPY agent.py ambiguity.py config.py database.py feedback.py main.py observability.py ./
+COPY privacy_policy.py privacy_policy.json query_log.py query_plan.py rate_limit.py ./
 COPY result_formatting.py schema_service.py semantic_layer.py semantic_layer.json ./
 COPY sql_safety.py sql_tools.py ./
 COPY evaluation/ evaluation/
 
-RUN useradd --create-home --shell /usr/sbin/nologin appuser
+RUN useradd --create-home --shell /usr/sbin/nologin appuser \
+    && mkdir --parents /data \
+    && chown appuser:appuser /data \
+    && chmod 0700 /data
 USER appuser
 
 EXPOSE 8000

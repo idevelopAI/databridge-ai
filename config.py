@@ -1,5 +1,6 @@
 import math
 import os
+from pathlib import Path
 from urllib.parse import quote_plus
 
 
@@ -104,3 +105,7 @@ def get_max_sequential_scan_rows() -> int:
 
 def get_max_cartesian_join_rows() -> int:
     return _get_positive_int("MAX_CARTESIAN_JOIN_ROWS", 10000)
+
+
+def get_feedback_db_path() -> Path:
+    return Path(os.environ.get("FEEDBACK_DB_PATH", "data/feedback.db"))

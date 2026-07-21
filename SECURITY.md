@@ -27,6 +27,10 @@ records in the report.
   Actions configuration.
 - Evaluation reports contain case IDs, pass/fail status, and timing by default;
   questions, answers, rows, and SQL require explicit inclusion or are omitted.
+- Prometheus labels and structured events must never include prompts, SQL,
+  credentials, tool arguments, or returned rows. Keep `AGENT_VERBOSE=false`.
+- Query feedback is an explicit persistence action. Protect the local feedback
+  volume and exported JSONL because they contain reviewed questions and SQL.
 - Enable GitHub secret scanning, push protection, and Dependabot alerts when the
   repository is public.
 
@@ -38,9 +42,15 @@ identity, authorization scopes, revocation, or durable rate limiting. Internet o
 multi-user deployment requires additional controls described in the README.
 
 The model provider receives request text, selected schema information, generated
-SQL, and query results. Do not connect confidential data until this processing is
-approved for the intended environment.
+SQL, and policy-filtered query results. Direct sensitive values are masked, but
+questions and aggregate values may still be confidential. Do not connect such
+data until this processing is approved for the intended environment.
 
 Query-plan rejections and database errors returned by the API are intentionally
 generic. Detailed database exceptions must remain in restricted local logs and
 must not be copied into public reports or issues.
+
+Privacy controls are defined in `privacy_policy.json`. Keep denylists and masks in
+source control, keep secrets out of the policy, and test policy changes before
+connecting a different schema. Database permissions remain the final enforcement
+boundary and must not be replaced by model instructions.

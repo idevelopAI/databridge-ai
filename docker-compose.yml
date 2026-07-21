@@ -43,6 +43,8 @@ services:
       MAX_SEQUENTIAL_SCAN_ROWS: ${MAX_SEQUENTIAL_SCAN_ROWS:-50000}
       MAX_CARTESIAN_JOIN_ROWS: ${MAX_CARTESIAN_JOIN_ROWS:-10000}
       SEMANTIC_LAYER_PATH: ${SEMANTIC_LAYER_PATH:-/app/semantic_layer.json}
+      PRIVACY_POLICY_PATH: ${PRIVACY_POLICY_PATH:-/app/privacy_policy.json}
+      FEEDBACK_DB_PATH: ${FEEDBACK_DB_PATH:-/data/feedback.db}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -56,6 +58,8 @@ services:
     init: true
     security_opt:
       - no-new-privileges:true
+    volumes:
+      - feedback_data:/data
     restart: unless-stopped
 
   frontend:
@@ -99,3 +103,4 @@ services:
 
 volumes:
   postgres_data:
+  feedback_data:

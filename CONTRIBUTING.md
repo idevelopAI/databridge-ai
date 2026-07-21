@@ -11,7 +11,8 @@
    ruff check .
    ruff format --check .
    python -m compileall -q agent.py app.py config.py csv_export.py database.py \
-     main.py query_log.py query_plan.py rate_limit.py result_formatting.py \
+     ambiguity.py feedback.py main.py observability.py privacy_policy.py \
+     query_log.py query_plan.py rate_limit.py result_formatting.py \
      schema_service.py semantic_layer.py sql_safety.py sql_tools.py evaluation tests
    pytest -q
    docker compose config --quiet

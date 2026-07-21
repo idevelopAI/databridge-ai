@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "tables": {
+    "allow": ["departments", "employees", "projects"],
+    "deny": []
+  },
+  "columns": {
+    "allow": [],
+    "deny": [
+      "employees.password_hash",
+      "employees.private_notes",
+      "employees.ssn"
+    ],
+    "mask": {
+      "employees.salary": "salary"
+    },
+    "restricted_terms": {
+      "employees.password_hash": ["password hash", "Passwort-Hash"],
+      "employees.private_notes": ["private notes", "private Notizen"],
+      "employees.ssn": [
+        "social security number",
+        "social security numbers",
+        "SSN",
+        "Sozialversicherungsnummer",
+        "Sozialversicherungsnummern"
+      ]
+    }
+  },
+  "masking": {
+    "enabled": true,
+    "auto_detect": true,
+    "allow_aggregates": true,
+    "replacement": "***"
+  }
+}

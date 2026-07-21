@@ -2,6 +2,26 @@
 
 All notable changes are documented in this file.
 
+## 1.2.0 - 2026-07-21
+
+### Added
+
+- Bilingual deterministic ambiguity detection with no model call for unclear
+  compensation, period, aggregation, or department requests
+- Pydantic-validated table and column policy with SQLGlot enforcement and direct
+  sensitive-value masking
+- Server-generated request IDs, privacy-safe structured events, LangChain model
+  and tool metadata, token usage, and authenticated Prometheus metrics
+- Correct/incorrect query feedback stored locally in SQLite with reviewed-example
+  JSONL export
+
+### Changed
+
+- Policy checks now run both before the model and before generated SQL execution
+- Direct salary, identifier, email, and phone outputs are masked before reaching
+  the model, response history, CSV export, or feedback controls
+- Expanded CI and Docker smoke checks for metrics and the new policy modules
+
 ## 1.1.0 - 2026-07-21
 
 ### Added

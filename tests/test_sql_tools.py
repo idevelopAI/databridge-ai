@@ -77,7 +77,7 @@ def test_database_errors_do_not_expose_driver_details():
     engine = create_engine("sqlite:///:memory:")
 
     output = execute_read_only_query(
-        "SELECT confidential_column FROM missing_table",
+        "SELECT confidential_column FROM employees",
         engine=engine,
         max_rows=10,
     )
@@ -88,3 +88,33 @@ def test_database_errors_do_not_expose_driver_details():
             "correct the table, column, or SQL syntax."
         )
     }
+
+
+def test_direct_salary_values_are_masked_before_recording():
+    engine = create_engine("sqlite:///:memory:")
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE employees (name TEXT, salary INT)"))
+        connection.execute(text("INSERT INTO employees VALUES ('Alice', 75000)"))
+
+    output = execute_read_only_query(
+        "SELECT name, salary FROM employees",
+        engine=engine,
+        max_rows=10,
+    )
+
+    assert output["rows"] == [["Alice", "***"]]
+
+
+def test_salary_aggregates_remain_usable():
+    engine = create_engine("sqlite:///:memory:")
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE employees (salary INT)"))
+        connection.execute(text("INSERT INTO employees VALUES (75000), (85000)"))
+
+    output = execute_read_only_query(
+        "SELECT AVG(salary) AS average_salary FROM employees",
+        engine=engine,
+        max_rows=10,
+    )
+
+    assert output["rows"] == [[80000.0]]

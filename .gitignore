@@ -17,3 +17,6 @@ htmlcov/
 .idea/
 .vscode/
 postgres_data/
+data/
+feedback_exports/
+databridge-reviewed-examples.jsonl

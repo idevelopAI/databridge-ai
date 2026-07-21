@@ -13,5 +13,7 @@ __pycache__/
 venv/
 env/
 postgres_data/
+data/
 tests/
 .DS_Store
+databridge-reviewed-examples.jsonl
