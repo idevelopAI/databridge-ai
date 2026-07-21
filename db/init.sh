@@ -8,9 +8,9 @@ psql -v ON_ERROR_STOP=1 \
   --dbname "$POSTGRES_DB" \
   -v ai_agent_password="$AI_AGENT_DB_PASSWORD" \
   -v database_name="$POSTGRES_DB" <<'SQL'
+DROP TABLE IF EXISTS projects CASCADE;
 DROP TABLE IF EXISTS employees CASCADE;
 DROP TABLE IF EXISTS departments CASCADE;
-DROP TABLE IF EXISTS projects CASCADE;
 
 CREATE TABLE departments (
     id SERIAL PRIMARY KEY,
@@ -27,20 +27,48 @@ CREATE TABLE employees (
 CREATE TABLE projects (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    budget DECIMAL(10, 2)
+    budget DECIMAL(10, 2),
+    department_id INT NOT NULL REFERENCES departments(id),
+    status VARCHAR(20) NOT NULL CHECK (status IN ('planned', 'active', 'completed')),
+    start_date DATE NOT NULL,
+    end_date DATE
 );
 
-INSERT INTO departments (name) VALUES ('Sales'), ('Engineering'), ('HR');
+INSERT INTO departments (name) VALUES
+('Sales'),
+('Engineering'),
+('HR'),
+('Finance'),
+('Marketing');
 
 INSERT INTO employees (name, salary, department_id) VALUES
 ('Alice Smith', 75000, 1),
 ('Bob Jones', 120000, 2),
 ('Charlie Brown', 60000, 3),
-('David Müller', 95000, 2);
+('David Müller', 95000, 2),
+('Eva Fischer', 110000, 4),
+('Frank Wilson', 82000, 1),
+('Grace Lee', 70000, 5),
+('Hannah Weber', 105000, 2),
+('Ian Carter', 65000, 3),
+('Julia Klein', 98000, 4),
+('Karl Schmidt', 88000, 5),
+('Lea Martin', 78000, 1);
 
-INSERT INTO projects (name, budget) VALUES
-('DataBridge AI', 150000),
-('Project Simon', 500000);
+INSERT INTO projects (
+    name,
+    budget,
+    department_id,
+    status,
+    start_date,
+    end_date
+) VALUES
+('DataBridge AI', 150000, 2, 'active', '2026-06-01', NULL),
+('Project Simon', 500000, 1, 'completed', '2025-01-15', '2025-12-15'),
+('Cloud Migration', 300000, 2, 'active', '2026-01-10', '2026-11-30'),
+('Hiring Portal', 90000, 3, 'planned', '2026-09-01', '2027-03-31'),
+('Finance Automation', 220000, 4, 'active', '2026-03-01', '2026-10-31'),
+('Brand Refresh', 130000, 5, 'completed', '2025-02-01', '2025-08-31');
 
 DO $$
 BEGIN

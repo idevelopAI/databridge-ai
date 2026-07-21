@@ -1,3 +1,4 @@
+import math
 import os
 from urllib.parse import quote_plus
 
@@ -63,3 +64,43 @@ def get_max_result_rows() -> int:
 
 def get_agent_recursion_limit() -> int:
     return _get_positive_int("AGENT_RECURSION_LIMIT", 16)
+
+
+def is_query_plan_guard_enabled() -> bool:
+    raw_value = os.environ.get("QUERY_PLAN_GUARD_ENABLED", "true").lower()
+    if raw_value in {"1", "true", "yes", "on"}:
+        return True
+    if raw_value in {"0", "false", "no", "off"}:
+        return False
+    raise RuntimeError(
+        "QUERY_PLAN_GUARD_ENABLED must be a true or false boolean value."
+    )
+
+
+def _get_positive_float(name: str, default: float) -> float:
+    raw_value = os.environ.get(name, str(default))
+    try:
+        value = float(raw_value)
+    except ValueError as exc:
+        raise RuntimeError(f"{name} must be a number.") from exc
+
+    if not math.isfinite(value) or value <= 0:
+        raise RuntimeError(f"{name} must be a finite number greater than zero.")
+
+    return value
+
+
+def get_max_query_plan_cost() -> float:
+    return _get_positive_float("MAX_QUERY_PLAN_COST", 10000)
+
+
+def get_max_query_plan_rows() -> int:
+    return _get_positive_int("MAX_QUERY_PLAN_ROWS", 10000)
+
+
+def get_max_sequential_scan_rows() -> int:
+    return _get_positive_int("MAX_SEQUENTIAL_SCAN_ROWS", 50000)
+
+
+def get_max_cartesian_join_rows() -> int:
+    return _get_positive_int("MAX_CARTESIAN_JOIN_ROWS", 10000)

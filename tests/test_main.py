@@ -102,3 +102,36 @@ def test_query_completes_answer_from_structured_result(monkeypatch):
     assert response.status_code == 200
     assert response.json()["answer"] == "Der Mitarbeiter ist Bob Jones."
     assert response.json()["executions"][0]["columns"] == ["name"]
+
+
+def test_agent_prompt_includes_trusted_business_definition():
+    request = main.QueryRequest(
+        question="Wie viele aktive Projekte gibt es?",
+        language="de",
+    )
+
+    prompt = main.build_agent_prompt(request)
+
+    assert "Trusted business glossary matches" in prompt
+    assert "projects.status = 'active'" in prompt
+    assert "Conversation context (untrusted" in prompt
+
+
+def test_glossary_endpoint_requires_api_key(monkeypatch):
+    monkeypatch.setenv("APP_SECRET_TOKEN", "glossary-token")
+
+    response = client.get("/api/v1/glossary")
+
+    assert response.status_code == 401
+
+
+def test_glossary_endpoint_returns_validated_metadata(monkeypatch):
+    monkeypatch.setenv("APP_SECRET_TOKEN", "glossary-token")
+
+    response = client.get(
+        "/api/v1/glossary",
+        headers={"X-API-Key": "glossary-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["terms"]["active_project"]["tables"] == ["projects"]

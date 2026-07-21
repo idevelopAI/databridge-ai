@@ -1,0 +1,496 @@
+{
+  "version": 1,
+  "fixture": "company_data_v2",
+  "cases": [
+    {
+      "id": "en_departments_alphabetical",
+      "language": "en",
+      "question": "List all departments alphabetically.",
+      "expected_sql": "SELECT name AS department FROM departments ORDER BY name",
+      "expected": {
+        "columns": ["department"],
+        "rows": [["Engineering"], ["Finance"], ["HR"], ["Marketing"], ["Sales"]]
+      },
+      "tags": ["projection", "ordering"]
+    },
+    {
+      "id": "en_department_count",
+      "language": "en",
+      "question": "How many departments are there?",
+      "expected_sql": "SELECT COUNT(*) AS department_count FROM departments",
+      "expected": {
+        "columns": ["department_count"],
+        "rows": [[5]]
+      },
+      "tags": ["aggregation"]
+    },
+    {
+      "id": "en_employees_alphabetical",
+      "language": "en",
+      "question": "Show every employee in alphabetical order.",
+      "expected_sql": "SELECT name AS employee FROM employees ORDER BY name",
+      "expected": {
+        "columns": ["employee"],
+        "rows": [["Alice Smith"], ["Bob Jones"], ["Charlie Brown"], ["David Müller"], ["Eva Fischer"], ["Frank Wilson"], ["Grace Lee"], ["Hannah Weber"], ["Ian Carter"], ["Julia Klein"], ["Karl Schmidt"], ["Lea Martin"]]
+      },
+      "tags": ["projection", "ordering"]
+    },
+    {
+      "id": "en_employee_count",
+      "language": "en",
+      "question": "What is the employee count?",
+      "expected_sql": "SELECT COUNT(*) AS employee_count FROM employees",
+      "expected": {
+        "columns": ["employee_count"],
+        "rows": [[12]]
+      },
+      "tags": ["metric", "aggregation"]
+    },
+    {
+      "id": "en_highest_salary",
+      "language": "en",
+      "question": "Who has the highest annual salary?",
+      "expected_sql": "SELECT name AS employee, salary FROM employees ORDER BY salary DESC, name LIMIT 1",
+      "expected": {
+        "columns": ["employee", "salary"],
+        "rows": [["Bob Jones", 120000]]
+      },
+      "tags": ["salary", "ordering", "limit"]
+    },
+    {
+      "id": "en_lowest_salary",
+      "language": "en",
+      "question": "Who has the lowest annual salary?",
+      "expected_sql": "SELECT name AS employee, salary FROM employees ORDER BY salary ASC, name LIMIT 1",
+      "expected": {
+        "columns": ["employee", "salary"],
+        "rows": [["Charlie Brown", 60000]]
+      },
+      "tags": ["salary", "ordering", "limit"]
+    },
+    {
+      "id": "en_average_salary",
+      "language": "en",
+      "question": "What is the average salary across all employees?",
+      "expected_sql": "SELECT ROUND(AVG(salary), 2) AS average_salary FROM employees",
+      "expected": {
+        "columns": ["average_salary"],
+        "rows": [[87166.67]]
+      },
+      "tags": ["metric", "aggregation", "salary"]
+    },
+    {
+      "id": "en_total_payroll",
+      "language": "en",
+      "question": "What is the total annual payroll?",
+      "expected_sql": "SELECT SUM(salary) AS total_salary FROM employees",
+      "expected": {
+        "columns": ["total_salary"],
+        "rows": [[1046000]]
+      },
+      "tags": ["metric", "aggregation", "salary"]
+    },
+    {
+      "id": "en_salary_above_100k_count",
+      "language": "en",
+      "question": "How many employees earn more than 100000 euros?",
+      "expected_sql": "SELECT COUNT(*) AS employees_above_100k FROM employees WHERE salary > 100000",
+      "expected": {
+        "columns": ["employees_above_100k"],
+        "rows": [[3]]
+      },
+      "tags": ["filter", "aggregation", "salary"]
+    },
+    {
+      "id": "en_engineering_employees",
+      "language": "en",
+      "question": "List Engineering employees from highest to lowest salary.",
+      "expected_sql": "SELECT e.name AS employee, e.salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Engineering' ORDER BY e.salary DESC, e.name",
+      "expected": {
+        "columns": ["employee", "salary"],
+        "rows": [["Bob Jones", 120000], ["Hannah Weber", 105000], ["David Müller", 95000]]
+      },
+      "tags": ["join", "filter", "ordering"]
+    },
+    {
+      "id": "en_engineering_top_earner",
+      "language": "en",
+      "question": "Who earns the most in Engineering?",
+      "expected_sql": "SELECT e.name AS employee, e.salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Engineering' ORDER BY e.salary DESC, e.name LIMIT 1",
+      "expected": {
+        "columns": ["employee", "salary"],
+        "rows": [["Bob Jones", 120000]]
+      },
+      "tags": ["join", "filter", "limit"]
+    },
+    {
+      "id": "en_engineering_average_salary",
+      "language": "en",
+      "question": "What is the average salary in Engineering?",
+      "expected_sql": "SELECT ROUND(AVG(e.salary), 2) AS average_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Engineering'",
+      "expected": {
+        "columns": ["average_salary"],
+        "rows": [[106666.67]]
+      },
+      "tags": ["metric", "join", "aggregation"]
+    },
+    {
+      "id": "en_headcount_by_department",
+      "language": "en",
+      "question": "Show the employee count for each department.",
+      "expected_sql": "SELECT d.name AS department, COUNT(e.id) AS employee_count FROM departments d LEFT JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name ORDER BY d.name",
+      "expected": {
+        "columns": ["department", "employee_count"],
+        "rows": [["Engineering", 3], ["Finance", 2], ["HR", 2], ["Marketing", 2], ["Sales", 3]]
+      },
+      "tags": ["metric", "join", "grouping"]
+    },
+    {
+      "id": "en_average_salary_by_department",
+      "language": "en",
+      "question": "Show average salary by department from highest to lowest.",
+      "expected_sql": "SELECT d.name AS department, ROUND(AVG(e.salary), 2) AS average_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name ORDER BY average_salary DESC, d.name",
+      "expected": {
+        "columns": ["department", "average_salary"],
+        "rows": [["Engineering", 106666.67], ["Finance", 104000], ["Marketing", 79000], ["Sales", 78333.33], ["HR", 62500]]
+      },
+      "tags": ["metric", "join", "grouping", "ordering"]
+    },
+    {
+      "id": "en_payroll_by_department",
+      "language": "en",
+      "question": "Show total payroll by department from highest to lowest.",
+      "expected_sql": "SELECT d.name AS department, SUM(e.salary) AS total_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name ORDER BY total_salary DESC, d.name",
+      "expected": {
+        "columns": ["department", "total_salary"],
+        "rows": [["Engineering", 320000], ["Sales", 235000], ["Finance", 208000], ["Marketing", 158000], ["HR", 125000]]
+      },
+      "tags": ["metric", "join", "grouping", "ordering"]
+    },
+    {
+      "id": "en_departments_average_above_90k",
+      "language": "en",
+      "question": "Which departments have an average salary above 90000 euros?",
+      "expected_sql": "SELECT d.name AS department, ROUND(AVG(e.salary), 2) AS average_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name HAVING AVG(e.salary) > 90000 ORDER BY average_salary DESC, d.name",
+      "expected": {
+        "columns": ["department", "average_salary"],
+        "rows": [["Engineering", 106666.67], ["Finance", 104000]]
+      },
+      "tags": ["join", "grouping", "having"]
+    },
+    {
+      "id": "en_top_earner_each_department",
+      "language": "en",
+      "question": "Who is the highest paid employee in each department?",
+      "expected_sql": "WITH ranked AS (SELECT d.name AS department, e.name AS employee, e.salary, ROW_NUMBER() OVER (PARTITION BY d.id ORDER BY e.salary DESC, e.name) AS salary_rank FROM departments d JOIN employees e ON e.department_id = d.id) SELECT department, employee, salary FROM ranked WHERE salary_rank = 1 ORDER BY department",
+      "expected": {
+        "columns": ["department", "employee", "salary"],
+        "rows": [["Engineering", "Bob Jones", 120000], ["Finance", "Eva Fischer", 110000], ["HR", "Ian Carter", 65000], ["Marketing", "Karl Schmidt", 88000], ["Sales", "Frank Wilson", 82000]]
+      },
+      "tags": ["join", "window", "groupwise-maximum"]
+    },
+    {
+      "id": "en_employees_without_department",
+      "language": "en",
+      "question": "Which employees have no department?",
+      "expected_sql": "SELECT name AS employee FROM employees WHERE department_id IS NULL ORDER BY name",
+      "expected": {
+        "columns": ["employee"],
+        "rows": []
+      },
+      "tags": ["null", "filter"]
+    },
+    {
+      "id": "en_salary_at_least_95k",
+      "language": "en",
+      "question": "List employees earning at least 95000 euros from highest to lowest.",
+      "expected_sql": "SELECT name AS employee, salary FROM employees WHERE salary >= 95000 ORDER BY salary DESC, name",
+      "expected": {
+        "columns": ["employee", "salary"],
+        "rows": [["Bob Jones", 120000], ["Eva Fischer", 110000], ["Hannah Weber", 105000], ["Julia Klein", 98000], ["David Müller", 95000]]
+      },
+      "tags": ["filter", "ordering", "salary"]
+    },
+    {
+      "id": "en_sales_payroll",
+      "language": "en",
+      "question": "What is the total payroll for Sales?",
+      "expected_sql": "SELECT SUM(e.salary) AS total_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Sales'",
+      "expected": {
+        "columns": ["total_salary"],
+        "rows": [[235000]]
+      },
+      "tags": ["metric", "join", "filter"]
+    },
+    {
+      "id": "de_projekte_nach_budget",
+      "language": "de",
+      "question": "Zeige alle Projekte absteigend nach Budget.",
+      "expected_sql": "SELECT name AS project, budget FROM projects ORDER BY budget DESC, name",
+      "expected": {
+        "columns": ["project", "budget"],
+        "rows": [["Project Simon", 500000], ["Cloud Migration", 300000], ["Finance Automation", 220000], ["DataBridge AI", 150000], ["Brand Refresh", 130000], ["Hiring Portal", 90000]]
+      },
+      "tags": ["projection", "ordering"]
+    },
+    {
+      "id": "de_hoechstes_projektbudget",
+      "language": "de",
+      "question": "Welches Projekt hat das höchste Budget?",
+      "expected_sql": "SELECT name AS project, budget FROM projects ORDER BY budget DESC, name LIMIT 1",
+      "expected": {
+        "columns": ["project", "budget"],
+        "rows": [["Project Simon", 500000]]
+      },
+      "tags": ["ordering", "limit"]
+    },
+    {
+      "id": "de_niedrigstes_projektbudget",
+      "language": "de",
+      "question": "Welches Projekt hat das niedrigste Budget?",
+      "expected_sql": "SELECT name AS project, budget FROM projects ORDER BY budget ASC, name LIMIT 1",
+      "expected": {
+        "columns": ["project", "budget"],
+        "rows": [["Hiring Portal", 90000]]
+      },
+      "tags": ["ordering", "limit"]
+    },
+    {
+      "id": "de_gesamtbudget",
+      "language": "de",
+      "question": "Wie hoch ist das Gesamtbudget aller Projekte?",
+      "expected_sql": "SELECT SUM(budget) AS total_project_budget FROM projects",
+      "expected": {
+        "columns": ["total_project_budget"],
+        "rows": [[1390000]]
+      },
+      "tags": ["metric", "aggregation"]
+    },
+    {
+      "id": "de_durchschnittliches_projektbudget",
+      "language": "de",
+      "question": "Wie hoch ist das durchschnittliche Projektbudget?",
+      "expected_sql": "SELECT ROUND(AVG(budget), 2) AS average_project_budget FROM projects",
+      "expected": {
+        "columns": ["average_project_budget"],
+        "rows": [[231666.67]]
+      },
+      "tags": ["aggregation"]
+    },
+    {
+      "id": "de_aktive_projekte",
+      "language": "de",
+      "question": "Welche Projekte sind aktiv?",
+      "expected_sql": "SELECT name AS project FROM projects WHERE status = 'active' ORDER BY name",
+      "expected": {
+        "columns": ["project"],
+        "rows": [["Cloud Migration"], ["DataBridge AI"], ["Finance Automation"]]
+      },
+      "tags": ["semantic-term", "filter"]
+    },
+    {
+      "id": "de_anzahl_aktive_projekte",
+      "language": "de",
+      "question": "Wie viele aktive Projekte gibt es?",
+      "expected_sql": "SELECT COUNT(*) AS active_project_count FROM projects WHERE status = 'active'",
+      "expected": {
+        "columns": ["active_project_count"],
+        "rows": [[3]]
+      },
+      "tags": ["semantic-term", "metric", "aggregation"]
+    },
+    {
+      "id": "de_budget_aktive_projekte",
+      "language": "de",
+      "question": "Wie hoch ist das Gesamtbudget der aktiven Projekte?",
+      "expected_sql": "SELECT SUM(budget) AS active_project_budget FROM projects WHERE status = 'active'",
+      "expected": {
+        "columns": ["active_project_budget"],
+        "rows": [[670000]]
+      },
+      "tags": ["semantic-term", "metric", "aggregation"]
+    },
+    {
+      "id": "de_projektanzahl_nach_status",
+      "language": "de",
+      "question": "Zeige die Anzahl der Projekte pro Status.",
+      "expected_sql": "SELECT status, COUNT(*) AS project_count FROM projects GROUP BY status ORDER BY status",
+      "expected": {
+        "columns": ["status", "project_count"],
+        "rows": [["active", 3], ["completed", 2], ["planned", 1]]
+      },
+      "tags": ["grouping", "aggregation"]
+    },
+    {
+      "id": "de_budget_nach_status",
+      "language": "de",
+      "question": "Zeige das Projektbudget pro Status absteigend.",
+      "expected_sql": "SELECT status, SUM(budget) AS total_budget FROM projects GROUP BY status ORDER BY total_budget DESC, status",
+      "expected": {
+        "columns": ["status", "total_budget"],
+        "rows": [["active", 670000], ["completed", 630000], ["planned", 90000]]
+      },
+      "tags": ["grouping", "aggregation", "ordering"]
+    },
+    {
+      "id": "de_engineering_projekte",
+      "language": "de",
+      "question": "Welche Projekte gehören zur Abteilung Engineering?",
+      "expected_sql": "SELECT p.name AS project, p.budget FROM projects p JOIN departments d ON d.id = p.department_id WHERE d.name = 'Engineering' ORDER BY p.budget DESC, p.name",
+      "expected": {
+        "columns": ["project", "budget"],
+        "rows": [["Cloud Migration", 300000], ["DataBridge AI", 150000]]
+      },
+      "tags": ["join", "filter", "ordering"]
+    },
+    {
+      "id": "de_projektbudget_nach_abteilung",
+      "language": "de",
+      "question": "Zeige das gesamte Projektbudget pro Abteilung absteigend.",
+      "expected_sql": "SELECT d.name AS department, SUM(p.budget) AS total_budget FROM departments d JOIN projects p ON p.department_id = d.id GROUP BY d.id, d.name ORDER BY total_budget DESC, d.name",
+      "expected": {
+        "columns": ["department", "total_budget"],
+        "rows": [["Sales", 500000], ["Engineering", 450000], ["Finance", 220000], ["Marketing", 130000], ["HR", 90000]]
+      },
+      "tags": ["join", "grouping", "ordering"]
+    },
+    {
+      "id": "de_abteilung_hoechstes_projektbudget",
+      "language": "de",
+      "question": "Welche Abteilung hat insgesamt das höchste Projektbudget?",
+      "expected_sql": "SELECT d.name AS department, SUM(p.budget) AS total_budget FROM departments d JOIN projects p ON p.department_id = d.id GROUP BY d.id, d.name ORDER BY total_budget DESC, d.name LIMIT 1",
+      "expected": {
+        "columns": ["department", "total_budget"],
+        "rows": [["Sales", 500000]]
+      },
+      "tags": ["join", "grouping", "limit"]
+    },
+    {
+      "id": "de_projektende_2026",
+      "language": "de",
+      "question": "Welche Projekte enden im Jahr 2026?",
+      "expected_sql": "SELECT name AS project, end_date FROM projects WHERE end_date >= DATE '2026-01-01' AND end_date < DATE '2027-01-01' ORDER BY end_date, name",
+      "expected": {
+        "columns": ["project", "end_date"],
+        "rows": [["Finance Automation", "2026-10-31"], ["Cloud Migration", "2026-11-30"]]
+      },
+      "tags": ["date", "filter", "ordering"]
+    },
+    {
+      "id": "de_projektstart_2026",
+      "language": "de",
+      "question": "Welche Projekte starten im Jahr 2026?",
+      "expected_sql": "SELECT name AS project, start_date FROM projects WHERE start_date >= DATE '2026-01-01' AND start_date < DATE '2027-01-01' ORDER BY start_date, name",
+      "expected": {
+        "columns": ["project", "start_date"],
+        "rows": [["Cloud Migration", "2026-01-10"], ["Finance Automation", "2026-03-01"], ["DataBridge AI", "2026-06-01"], ["Hiring Portal", "2026-09-01"]]
+      },
+      "tags": ["date", "filter", "ordering"]
+    },
+    {
+      "id": "de_abgeschlossene_projekte",
+      "language": "de",
+      "question": "Liste alle abgeschlossenen Projekte alphabetisch auf.",
+      "expected_sql": "SELECT name AS project FROM projects WHERE status = 'completed' ORDER BY name",
+      "expected": {
+        "columns": ["project"],
+        "rows": [["Brand Refresh"], ["Project Simon"]]
+      },
+      "tags": ["semantic-term", "filter", "ordering"]
+    },
+    {
+      "id": "de_geplante_projekte",
+      "language": "de",
+      "question": "Welche Projekte sind geplant?",
+      "expected_sql": "SELECT name AS project FROM projects WHERE status = 'planned' ORDER BY name",
+      "expected": {
+        "columns": ["project"],
+        "rows": [["Hiring Portal"]]
+      },
+      "tags": ["semantic-term", "filter"]
+    },
+    {
+      "id": "de_abteilungen_mit_aktiven_projekten",
+      "language": "de",
+      "question": "Welche Abteilungen haben aktive Projekte?",
+      "expected_sql": "SELECT DISTINCT d.name AS department FROM departments d JOIN projects p ON p.department_id = d.id WHERE p.status = 'active' ORDER BY d.name",
+      "expected": {
+        "columns": ["department"],
+        "rows": [["Engineering"], ["Finance"]]
+      },
+      "tags": ["semantic-term", "join", "distinct"]
+    },
+    {
+      "id": "de_projektanzahl_pro_abteilung",
+      "language": "de",
+      "question": "Wie viele Projekte hat jede Abteilung?",
+      "expected_sql": "SELECT d.name AS department, COUNT(p.id) AS project_count FROM departments d LEFT JOIN projects p ON p.department_id = d.id GROUP BY d.id, d.name ORDER BY d.name",
+      "expected": {
+        "columns": ["department", "project_count"],
+        "rows": [["Engineering", 2], ["Finance", 1], ["HR", 1], ["Marketing", 1], ["Sales", 1]]
+      },
+      "tags": ["metric", "join", "grouping"]
+    },
+    {
+      "id": "de_mitarbeiter_und_projekte_pro_abteilung",
+      "language": "de",
+      "question": "Zeige die Anzahl der Mitarbeiter und Projekte pro Abteilung.",
+      "expected_sql": "SELECT d.name AS department, COUNT(DISTINCT e.id) AS employee_count, COUNT(DISTINCT p.id) AS project_count FROM departments d LEFT JOIN employees e ON e.department_id = d.id LEFT JOIN projects p ON p.department_id = d.id GROUP BY d.id, d.name ORDER BY d.name",
+      "expected": {
+        "columns": ["department", "employee_count", "project_count"],
+        "rows": [["Engineering", 3, 2], ["Finance", 2, 1], ["HR", 2, 1], ["Marketing", 2, 1], ["Sales", 3, 1]]
+      },
+      "tags": ["multi-join", "distinct", "grouping"]
+    }
+  ],
+  "unsafe_cases": [
+    {
+      "id": "unsafe_delete",
+      "sql": "DELETE FROM employees"
+    },
+    {
+      "id": "unsafe_update",
+      "sql": "UPDATE employees SET salary = 0"
+    },
+    {
+      "id": "unsafe_insert",
+      "sql": "INSERT INTO departments (name) VALUES ('Injected')"
+    },
+    {
+      "id": "unsafe_drop",
+      "sql": "DROP TABLE employees"
+    },
+    {
+      "id": "unsafe_multiple_statements",
+      "sql": "SELECT 1; SELECT 2"
+    },
+    {
+      "id": "unsafe_select_into",
+      "sql": "SELECT * INTO copied_employees FROM employees"
+    },
+    {
+      "id": "unsafe_row_lock",
+      "sql": "SELECT * FROM employees FOR UPDATE"
+    },
+    {
+      "id": "unsafe_sleep",
+      "sql": "SELECT pg_sleep(10)"
+    },
+    {
+      "id": "unsafe_set_config",
+      "sql": "SELECT set_config('search_path', 'public', false)"
+    },
+    {
+      "id": "unsafe_advisory_lock",
+      "sql": "SELECT pg_advisory_lock(1)"
+    },
+    {
+      "id": "unsafe_dblink",
+      "sql": "SELECT dblink('host=example', 'SELECT 1')"
+    },
+    {
+      "id": "unsafe_large_object_export",
+      "sql": "SELECT lo_export(1, '/tmp/export')"
+    }
+  ]
+}

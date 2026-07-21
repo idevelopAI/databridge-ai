@@ -9,8 +9,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --requirement requirements.txt
 
-COPY agent.py config.py database.py main.py query_log.py rate_limit.py ./
-COPY result_formatting.py schema_service.py sql_safety.py sql_tools.py ./
+COPY agent.py config.py database.py main.py query_log.py query_plan.py rate_limit.py ./
+COPY result_formatting.py schema_service.py semantic_layer.py semantic_layer.json ./
+COPY sql_safety.py sql_tools.py ./
+COPY evaluation/ evaluation/
 
 RUN useradd --create-home --shell /usr/sbin/nologin appuser
 USER appuser

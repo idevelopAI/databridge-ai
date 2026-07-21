@@ -71,3 +71,20 @@ def test_describe_tables_rejects_unknown_names():
 
 def test_decimal_values_are_json_serializable():
     assert _json_value(Decimal("120000.25")) == 120000.25
+
+
+def test_database_errors_do_not_expose_driver_details():
+    engine = create_engine("sqlite:///:memory:")
+
+    output = execute_read_only_query(
+        "SELECT confidential_column FROM missing_table",
+        engine=engine,
+        max_rows=10,
+    )
+
+    assert output == {
+        "error": (
+            "Database rejected the query. Reinspect the relevant schema and "
+            "correct the table, column, or SQL syntax."
+        )
+    }

@@ -9,9 +9,11 @@ from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from config import get_max_result_rows
+from config import get_max_result_rows, is_query_plan_guard_enabled
 from database import get_engine, get_schema_metadata
 from query_log import record_sql_execution
+from query_plan import inspect_query_plan
+from semantic_layer import get_semantic_layer_data
 from sql_safety import validate_read_only_sql
 
 
@@ -42,17 +44,31 @@ def execute_read_only_query(
     row_limit = max_rows if max_rows is not None else get_max_result_rows()
     started_at = perf_counter()
 
+    active_engine = engine or get_engine()
+
     try:
-        with (engine or get_engine()).connect() as connection:
+        with active_engine.connect() as connection:
+            if (
+                active_engine.dialect.name == "postgresql"
+                and is_query_plan_guard_enabled()
+            ):
+                plan_result = inspect_query_plan(connection, query)
+                if not plan_result.is_safe:
+                    return {"error": f"Query plan rejected: {plan_result.reason}."}
+
             result = connection.execute(text(query))
             if not result.returns_rows:
                 return {"error": "The database query did not return rows."}
 
             columns = list(result.keys())
             raw_rows = result.fetchmany(row_limit + 1)
-    except SQLAlchemyError as exc:
-        database_error = getattr(exc, "orig", exc)
-        return {"error": f"Database rejected the query: {database_error}"}
+    except SQLAlchemyError:
+        return {
+            "error": (
+                "Database rejected the query. Reinspect the relevant schema and "
+                "correct the table, column, or SQL syntax."
+            )
+        }
 
     truncated = len(raw_rows) > row_limit
     visible_rows = raw_rows[:row_limit]
@@ -103,6 +119,12 @@ def sql_db_schema(table_names: str) -> dict[str, Any]:
     return describe_tables(table_names)
 
 
+@tool("sql_db_business_glossary")
+def sql_db_business_glossary() -> dict[str, Any]:
+    """Return trusted business terms, aliases, metrics, and SQL definitions."""
+    return get_semantic_layer_data()
+
+
 @tool("sql_db_query")
 def sql_db_query(query: str) -> dict[str, Any]:
     """Execute one parsed, read-only PostgreSQL query and return bounded JSON rows."""
@@ -110,4 +132,9 @@ def sql_db_query(query: str) -> dict[str, Any]:
 
 
 def build_sql_tools() -> list:
-    return [sql_db_list_tables, sql_db_schema, sql_db_query]
+    return [
+        sql_db_list_tables,
+        sql_db_business_glossary,
+        sql_db_schema,
+        sql_db_query,
+    ]

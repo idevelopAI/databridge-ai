@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "tables": {
+    "departments": {
+      "description": "Organizational departments that group employees and projects.",
+      "aliases": ["department", "departments", "Abteilung", "Abteilungen", "Bereich", "Bereiche", "team", "teams"],
+      "columns": {
+        "id": {
+          "description": "Unique department identifier.",
+          "aliases": ["department id", "Abteilungs-ID"]
+        },
+        "name": {
+          "description": "Department name such as Engineering, Sales, or HR.",
+          "aliases": ["department name", "Abteilungsname"]
+        }
+      }
+    },
+    "employees": {
+      "description": "Employees with annual salary and department membership.",
+      "aliases": ["employee", "employees", "Mitarbeiter", "Mitarbeitende", "Beschaeftigte", "Beschäftigte", "Personal"],
+      "columns": {
+        "id": {
+          "description": "Unique employee identifier.",
+          "aliases": ["employee id", "Mitarbeiter-ID"]
+        },
+        "name": {
+          "description": "Employee full name.",
+          "aliases": ["employee name", "Mitarbeitername", "person"]
+        },
+        "salary": {
+          "description": "Gross annual salary in euros; null salaries are excluded from salary metrics.",
+          "aliases": ["salary", "annual salary", "pay", "earns", "earning", "Gehalt", "Jahresgehalt", "verdient", "Verdienst"]
+        },
+        "department_id": {
+          "description": "Department membership referencing departments.id.",
+          "aliases": ["employee department", "Mitarbeiterabteilung"]
+        }
+      }
+    },
+    "projects": {
+      "description": "Department-owned projects with budget, lifecycle status, and dates.",
+      "aliases": ["project", "projects", "Projekt", "Projekte", "Vorhaben"],
+      "columns": {
+        "id": {
+          "description": "Unique project identifier.",
+          "aliases": ["project id", "Projekt-ID"]
+        },
+        "name": {
+          "description": "Project name.",
+          "aliases": ["project name", "Projektname"]
+        },
+        "budget": {
+          "description": "Approved project budget in euros.",
+          "aliases": ["budget", "project budget", "Projektbudget", "Kostenrahmen"]
+        },
+        "department_id": {
+          "description": "Owning department referencing departments.id.",
+          "aliases": ["project department", "Projektabteilung"]
+        },
+        "status": {
+          "description": "Project lifecycle status: planned, active, or completed.",
+          "aliases": ["project status", "Projektstatus", "state", "Zustand"]
+        },
+        "start_date": {
+          "description": "Planned or actual project start date.",
+          "aliases": ["start date", "project start", "Startdatum", "Projektstart"]
+        },
+        "end_date": {
+          "description": "Planned or actual project end date; null means no end date is set.",
+          "aliases": ["end date", "project end", "Enddatum", "Projektende"]
+        }
+      }
+    }
+  },
+  "metrics": {
+    "average_salary": {
+      "description": "Arithmetic mean of non-null employee annual salaries.",
+      "aliases": ["average salary", "mean salary", "Durchschnittsgehalt", "durchschnittliche Gehalt", "durchschnittliches Gehalt", "mittleres Gehalt"],
+      "expression": "AVG(employees.salary)",
+      "tables": ["employees"]
+    },
+    "employee_count": {
+      "description": "Number of employees, counted by employees.id.",
+      "aliases": ["employee count", "headcount", "Anzahl Mitarbeiter", "Mitarbeiterzahl", "Personalstaerke", "Personalstärke"],
+      "expression": "COUNT(employees.id)",
+      "tables": ["employees"]
+    },
+    "total_salary": {
+      "description": "Sum of non-null annual employee salaries.",
+      "aliases": ["total salary", "payroll", "Gehaltskosten", "Gehaltssumme"],
+      "expression": "SUM(employees.salary)",
+      "tables": ["employees"]
+    },
+    "project_count": {
+      "description": "Number of projects, counted by projects.id.",
+      "aliases": ["project count", "Anzahl Projekte", "Projektanzahl"],
+      "expression": "COUNT(projects.id)",
+      "tables": ["projects"]
+    },
+    "total_project_budget": {
+      "description": "Sum of project budgets in euros.",
+      "aliases": ["total project budget", "total budget", "Gesamtbudget", "Projektbudget gesamt"],
+      "expression": "SUM(projects.budget)",
+      "tables": ["projects"]
+    }
+  },
+  "terms": {
+    "active_project": {
+      "description": "A project is active only when its lifecycle status equals active.",
+      "aliases": ["active project", "active projects", "aktives Projekt", "aktive Projekte", "laufendes Projekt", "laufende Projekte"],
+      "condition": "projects.status = 'active'",
+      "tables": ["projects"]
+    },
+    "completed_project": {
+      "description": "A project is completed only when its lifecycle status equals completed.",
+      "aliases": ["completed project", "completed projects", "abgeschlossenes Projekt", "abgeschlossene Projekte"],
+      "condition": "projects.status = 'completed'",
+      "tables": ["projects"]
+    },
+    "planned_project": {
+      "description": "A project is planned only when its lifecycle status equals planned.",
+      "aliases": ["planned project", "planned projects", "geplantes Projekt", "geplante Projekte"],
+      "condition": "projects.status = 'planned'",
+      "tables": ["projects"]
+    }
+  }
+}
