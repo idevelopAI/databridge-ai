@@ -464,7 +464,8 @@ for message_index, message in enumerate(st.session_state.messages):
         else:
             st.markdown(message["content"])
 
-prompt = selected_example or st.chat_input(labels["input"])
+typed_prompt = st.chat_input(labels["input"])
+prompt = selected_example or typed_prompt
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
