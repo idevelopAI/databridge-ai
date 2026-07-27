@@ -24,6 +24,7 @@ chart, downloadable CSV, and inspectable SQL.
 - Request IDs, privacy-safe structured events, and authenticated Prometheus metrics
 - Correct/incorrect query feedback with local JSONL export
 - Forty-case bilingual evaluation with twelve adversarial SQL safety cases
+- Recorded fixture mode for a complete demo without an API key or model call
 - Docker Compose setup with health checks and an optional pgAdmin profile
 - FastAPI OpenAPI documentation at `http://localhost:8000/docs`
 
@@ -53,7 +54,30 @@ the full workflow is usable immediately.
 ## Requirements
 
 - Docker Desktop with Docker Compose
-- A Google API key with access to the configured Gemini model
+- A Google API key with access to the configured Gemini model for live mode only
+
+## No-Key Demo
+
+Start the complete synthetic-data demo without creating `.env` or calling a model:
+
+```bash
+./scripts/demo.sh
+```
+
+Open `http://localhost:8601`. The script creates temporary random local
+credentials, starts an isolated Compose project, and forces `APP_MODE=recorded`
+with an empty model key. Questions are matched to versioned, verified SQL
+fixtures, then pass through the real SQL validator, query-plan guard, PostgreSQL
+database, privacy masking, result formatting, charts, and feedback path.
+
+Stop and remove the isolated demo with:
+
+```bash
+./scripts/demo.sh down
+```
+
+Recorded mode demonstrates the application workflow and controls. It is not
+reported as live LLM accuracy.
 
 ## Quick Start
 
@@ -203,26 +227,43 @@ unsafe statements are rejected. It never calls Gemini:
 docker compose exec backend python -m evaluation.run
 ```
 
-The verified `company_data_v2` baseline is:
+The committed [`recorded-report.json`](evaluation/recorded-report.json) was
+measured inside the isolated recorded-mode Compose stack:
 
 | Metric | Result |
 | --- | ---: |
-| Canonical execution success | 40/40 (100%) |
-| Canonical result equivalence | 40/40 (100%) |
+| Recorded execution success | 40/40 (100%) |
+| Recorded result equivalence | 40/40 (100%) |
 | Unsafe-query rejection | 12/12 (100%) |
-| Median / p95 local query latency | 1 ms / 2 ms |
+| Recorded p50 / p95 latency | 1 ms / 2 ms |
+| Recorded model tokens | 0 |
+| Recorded estimated cost/query | $0.000000 |
+| Live Gemini result equivalence | Not run |
+| Automated tests | 97 passed |
 
-This deterministic baseline validates the dataset and execution controls; it is
-not presented as model accuracy. Live Text-to-SQL evaluation is explicitly
-opt-in and calls the configured Gemini model once or more per selected case:
+Reproduce the recorded application-path measurement without a provider call:
 
 ```bash
-docker compose exec backend python -m evaluation.run --live --limit 5
+docker compose exec backend python -m evaluation.run --recorded
+```
+
+This deterministic baseline validates the fixture, database path, and execution
+controls; it is not presented as model accuracy. Live Text-to-SQL evaluation is
+explicitly opt-in and calls the configured Gemini model once or more per selected
+case:
+
+```bash
+docker compose exec backend python -m evaluation.run --live --limit 5 \
+  --max-cost-usd 0.05
 ```
 
 Use `--case CASE_ID` to select specific cases and `--minimum-equivalence` to set
-a failure threshold. Save and copy a report from the non-root backend container
-with:
+a failure threshold. The evaluator estimates cost from provider-reported token
+usage and configurable input/output prices. The cost cap prevents subsequent
+cases from starting after the configured amount is reached; provider billing
+remains authoritative.
+
+Save and copy a report from the non-root backend container with:
 
 ```bash
 docker compose exec backend python -m evaluation.run --output /tmp/evaluation-report.json
@@ -270,9 +311,10 @@ Run all local checks:
 ruff check .
 ruff format --check .
 python -m compileall -q agent.py app.py config.py csv_export.py database.py \
-  ambiguity.py feedback.py main.py observability.py privacy_policy.py query_log.py \
-  query_plan.py rate_limit.py result_formatting.py schema_service.py \
-  semantic_layer.py sql_safety.py sql_tools.py evaluation tests
+  ambiguity.py feedback.py main.py observability.py privacy_policy.py \
+  query_log.py query_plan.py rate_limit.py recorded_demo.py \
+  result_formatting.py schema_service.py semantic_layer.py sql_safety.py \
+  sql_tools.py unsafe_intent.py evaluation tests
 pytest -q
 docker compose config --quiet
 ```
@@ -313,6 +355,7 @@ user authentication, durable distributed rate limiting, audit controls, and a
 managed secrets solution before any networked deployment.
 
 See [SECURITY.md](SECURITY.md) for reporting guidance and additional safeguards.
+Architectural decisions are recorded in [`docs/adr`](docs/adr).
 
 ## Optional pgAdmin
 

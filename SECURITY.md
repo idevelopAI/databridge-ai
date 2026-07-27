@@ -27,6 +27,8 @@ records in the report.
   Actions configuration.
 - Evaluation reports contain case IDs, pass/fail status, and timing by default;
   questions, answers, rows, and SQL require explicit inclusion or are omitted.
+- Recorded demo mode must force an empty model key and must not initialize or call
+  a model provider.
 - Prometheus labels and structured events must never include prompts, SQL,
   credentials, tool arguments, or returned rows. Keep `AGENT_VERBOSE=false`.
 - Query feedback is an explicit persistence action. Protect the local feedback
@@ -54,3 +56,7 @@ Privacy controls are defined in `privacy_policy.json`. Keep denylists and masks 
 source control, keep secrets out of the policy, and test policy changes before
 connecting a different schema. Database permissions remain the final enforcement
 boundary and must not be replaced by model instructions.
+
+Release assets, screenshots, evaluation reports, SBOMs, and scan reports must be
+reviewed for credentials and real records before publication. Only the included
+synthetic fixture may appear in public demo material.

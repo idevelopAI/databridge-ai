@@ -2,7 +2,7 @@
 
 All notable changes are documented in this file.
 
-## 1.2.0 - 2026-07-21
+## 1.2.0 - 2026-07-27
 
 ### Added
 
@@ -14,6 +14,12 @@ All notable changes are documented in this file.
   and tool metadata, token usage, and authenticated Prometheus metrics
 - Correct/incorrect query feedback stored locally in SQLite with reviewed-example
   JSONL export
+- Isolated recorded-fixture demo mode that runs without an API key or model call
+- Recorded application-path evaluation with p50/p95 latency, token totals, and
+  estimated cost per query
+- Deterministic unsafe modification-intent rejection before agent execution
+- Architecture decision records for SQL safety, plan gating, and privacy-safe
+  observability
 
 ### Changed
 
@@ -21,6 +27,7 @@ All notable changes are documented in this file.
 - Direct salary, identifier, email, and phone outputs are masked before reaching
   the model, response history, CSV export, or feedback controls
 - Expanded CI and Docker smoke checks for metrics and the new policy modules
+- Live evaluation supports explicit cost caps and configurable token pricing
 
 ## 1.1.0 - 2026-07-21
 
