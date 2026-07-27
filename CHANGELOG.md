@@ -20,6 +20,8 @@ All notable changes are documented in this file.
 - Deterministic unsafe modification-intent rejection before agent execution
 - Architecture decision records for SQL safety, plan gating, and privacy-safe
   observability
+- Repeatable 75-second demo sequence covering results, SQL, charts,
+  clarification, masking, and unsafe-request rejection
 - Tag-driven GHCR publication with SPDX SBOMs, Trivy vulnerability reports,
   checksums, and signed build and SBOM attestations
 

@@ -79,6 +79,9 @@ Stop and remove the isolated demo with:
 Recorded mode demonstrates the application workflow and controls. It is not
 reported as live LLM accuracy.
 
+The repeatable 75-second walkthrough is documented in
+[`docs/demo-script.md`](docs/demo-script.md).
+
 ## Quick Start
 
 1. Create the local configuration file:
