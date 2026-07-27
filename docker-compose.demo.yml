@@ -1,0 +1,9 @@
+services:
+  backend:
+    environment:
+      APP_MODE: recorded
+      GOOGLE_API_KEY: ""
+
+  frontend:
+    environment:
+      APP_MODE: recorded

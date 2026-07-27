@@ -36,6 +36,7 @@ from result_formatting import ensure_answer_includes_result
 from schema_service import clear_schema_cache, get_schema_metadata
 from semantic_layer import get_semantic_layer_data, semantic_context_for_question
 from sql_safety import validate_read_only_sql
+from unsafe_intent import detect_unsafe_intent
 
 logger = logging.getLogger("databridge")
 
@@ -280,6 +281,19 @@ def ask_database(
                 rejection_reason="rate_limit",
             )
             raise
+
+        unsafe_intent = detect_unsafe_intent(request.question, request.language)
+        if unsafe_intent is not None:
+            duration = perf_counter() - started_at
+            record_rejection("sql_safety", unsafe_intent.code)
+            record_request("rejected", duration)
+            log_query_event(
+                event="query_rejected",
+                outcome="rejected",
+                duration_ms=round(duration * 1000),
+                rejection_reason=unsafe_intent.code,
+            )
+            raise HTTPException(status_code=403, detail=unsafe_intent.message)
 
         clarification = detect_ambiguity(request.question, request.language)
         if clarification is not None:

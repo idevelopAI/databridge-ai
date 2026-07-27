@@ -91,6 +91,7 @@ KNOWN_REJECTION_REASONS = {
     "restricted_table",
     "sql_parse",
     "sql_prohibited",
+    "unsafe_intent",
     "uninspectable_sql",
     "wildcard_selection",
 }

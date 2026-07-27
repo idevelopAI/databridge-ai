@@ -1,6 +1,7 @@
 import math
 import os
 from pathlib import Path
+from typing import Literal
 from urllib.parse import quote_plus
 
 
@@ -13,6 +14,13 @@ def require_env(name: str) -> str:
 
 def get_app_secret_token() -> str:
     return require_env("APP_SECRET_TOKEN")
+
+
+def get_app_mode() -> Literal["live", "recorded"]:
+    mode = os.environ.get("APP_MODE", "live").strip().casefold()
+    if mode not in {"live", "recorded"}:
+        raise RuntimeError("APP_MODE must be live or recorded.")
+    return mode
 
 
 def get_database_url() -> str:

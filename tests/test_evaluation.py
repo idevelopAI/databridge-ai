@@ -2,7 +2,7 @@ from pathlib import Path
 
 from evaluation.comparison import compare_execution
 from evaluation.models import ExpectedResult, load_dataset
-from evaluation.run import _offline_case
+from evaluation.run import _offline_case, _report
 
 
 def test_evaluation_dataset_has_bilingual_coverage():
@@ -81,3 +81,37 @@ def test_offline_report_includes_sql_only_when_requested(monkeypatch):
     result = _offline_case(case, include_sql=True)
 
     assert result["sql"] == case.expected_sql
+
+
+def test_report_calculates_tokens_latency_and_cost():
+    report = _report(
+        "live",
+        "fixture",
+        [
+            {
+                "executed": True,
+                "equivalent": True,
+                "duration_ms": 100,
+                "input_tokens": 1000,
+                "output_tokens": 200,
+            },
+            {
+                "executed": True,
+                "equivalent": True,
+                "duration_ms": 300,
+                "input_tokens": 1000,
+                "output_tokens": 200,
+            },
+        ],
+        [{"rejected": True}],
+        input_price_per_million_usd=0.30,
+        output_price_per_million_usd=2.50,
+    )
+
+    summary = report["summary"]
+    assert summary["p50_latency_ms"] == 200
+    assert summary["p95_latency_ms"] == 300
+    assert summary["input_tokens"] == 2000
+    assert summary["output_tokens"] == 400
+    assert summary["total_cost_usd"] == 0.0016
+    assert summary["cost_per_query_usd"] == 0.0008

@@ -7,6 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 from config import (
     get_agent_recursion_limit,
+    get_app_mode,
     get_max_result_rows,
     is_agent_verbose,
     require_env,
@@ -109,7 +110,12 @@ Rules:
 def get_agent_executor() -> AgentExecutorAdapter:
     global _agent_executor
     if _agent_executor is None:
-        _agent_executor = build_agent_executor()
+        if get_app_mode() == "recorded":
+            from recorded_demo import build_recorded_demo_agent
+
+            _agent_executor = build_recorded_demo_agent()
+        else:
+            _agent_executor = build_agent_executor()
     return _agent_executor
 
 

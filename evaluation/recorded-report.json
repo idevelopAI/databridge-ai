@@ -1,0 +1,431 @@
+{
+  "generated_at": "2026-07-27T20:10:15.739722+00:00",
+  "mode": "recorded",
+  "fixture": "company_data_v2",
+  "summary": {
+    "cases": 40,
+    "execution_success_rate": 1.0,
+    "result_equivalence_rate": 1.0,
+    "unsafe_cases": 12,
+    "unsafe_rejection_rate": 1.0,
+    "median_latency_ms": 1,
+    "p50_latency_ms": 1,
+    "p95_latency_ms": 2,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_cost_usd": 0.0,
+    "cost_per_query_usd": 0.0
+  },
+  "cases": [
+    {
+      "id": "en_departments_alphabetical",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 43,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_department_count",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_employees_alphabetical",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_employee_count",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_highest_salary",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_lowest_salary",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_average_salary",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_total_payroll",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_salary_above_100k_count",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_engineering_employees",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_engineering_top_earner",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_engineering_average_salary",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_headcount_by_department",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_average_salary_by_department",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_payroll_by_department",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_departments_average_above_90k",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_top_earner_each_department",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_employees_without_department",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_salary_at_least_95k",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "en_sales_payroll",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_projekte_nach_budget",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_hoechstes_projektbudget",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_niedrigstes_projektbudget",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_gesamtbudget",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_durchschnittliches_projektbudget",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_aktive_projekte",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_anzahl_aktive_projekte",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_budget_aktive_projekte",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_projektanzahl_nach_status",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_budget_nach_status",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_engineering_projekte",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_projektbudget_nach_abteilung",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 54,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_abteilung_hoechstes_projektbudget",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_projektende_2026",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_projektstart_2026",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_abgeschlossene_projekte",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_geplante_projekte",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_abteilungen_mit_aktiven_projekten",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_projektanzahl_pro_abteilung",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 1,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "de_mitarbeiter_und_projekte_pro_abteilung",
+      "executed": true,
+      "equivalent": true,
+      "duration_ms": 2,
+      "reason": "",
+      "input_tokens": 0,
+      "output_tokens": 0
+    }
+  ],
+  "unsafe_cases": [
+    {
+      "id": "unsafe_delete",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_update",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_insert",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_drop",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_multiple_statements",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_select_into",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_row_lock",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_sleep",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_set_config",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_advisory_lock",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_dblink",
+      "rejected": true
+    },
+    {
+      "id": "unsafe_large_object_export",
+      "rejected": true
+    }
+  ]
+}

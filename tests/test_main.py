@@ -186,6 +186,29 @@ def test_restricted_question_is_rejected_without_agent(monkeypatch):
     )
 
 
+def test_unsafe_intent_is_rejected_without_agent(monkeypatch):
+    monkeypatch.setenv("APP_SECRET_TOKEN", "unsafe-intent-token")
+    monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "100")
+
+    class UnexpectedAgent:
+        def invoke(self, payload):
+            raise AssertionError("The model must not receive modification requests")
+
+    monkeypatch.setattr(main, "get_agent_executor", lambda: UnexpectedAgent())
+
+    response = client.post(
+        "/api/v1/query",
+        json={"question": "Delete all employees", "language": "en"},
+        headers={"X-API-Key": "unsafe-intent-token"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "Database modifications are not allowed. DataBridge AI only runs "
+        "read-only queries."
+    )
+
+
 def test_invalid_privacy_policy_fails_closed_without_details(monkeypatch, tmp_path):
     monkeypatch.setenv("APP_SECRET_TOKEN", "privacy-config-token")
     monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "100")

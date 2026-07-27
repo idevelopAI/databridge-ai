@@ -96,6 +96,7 @@ TEXT = {
         "restricted": (
             "Diese Anfrage betrifft durch die Datenschutzrichtlinie gesperrte Daten."
         ),
+        "unsafe": "Datenbankänderungen sind nicht erlaubt.",
         "connection_failed": "Das Backend ist nicht erreichbar.",
         "table": "Tabelle",
         "chart": "Diagramm",
@@ -110,6 +111,7 @@ TEXT = {
         "feedback_failed": "Feedback konnte nicht gespeichert werden.",
         "feedback": "Feedback",
         "export_feedback": "Geprüfte Beispiele exportieren",
+        "recorded_mode": "Aufgezeichnete Demo · Keine Modellaufrufe",
         "examples_list": [
             "Wer verdient am meisten im Engineering?",
             "Wie hoch ist das durchschnittliche Gehalt pro Abteilung?",
@@ -132,6 +134,7 @@ TEXT = {
         "unavailable": "The database agent is not ready yet.",
         "request_failed": "The request could not be processed.",
         "restricted": "This request includes data blocked by the privacy policy.",
+        "unsafe": "Database modifications are not allowed.",
         "connection_failed": "The backend is unavailable.",
         "table": "Table",
         "chart": "Chart",
@@ -146,6 +149,7 @@ TEXT = {
         "feedback_failed": "Feedback could not be saved.",
         "feedback": "Feedback",
         "export_feedback": "Export reviewed examples",
+        "recorded_mode": "Recorded demo · No model calls",
         "examples_list": [
             "Who earns the most in Engineering?",
             "What is the average salary by department?",
@@ -165,6 +169,7 @@ BACKEND_FEEDBACK_URL = os.environ.get(
 )
 BACKEND_FEEDBACK_EXPORT_URL = f"{BACKEND_FEEDBACK_URL}/export"
 APP_SECRET_TOKEN = os.environ.get("APP_SECRET_TOKEN")
+APP_MODE = os.environ.get("APP_MODE", "live").strip().casefold()
 
 if not APP_SECRET_TOKEN:
     st.error("APP_SECRET_TOKEN is not configured for the frontend service.")
@@ -374,6 +379,8 @@ with st.sidebar:
     )
     labels = TEXT[language]
     st.caption(labels["tagline"])
+    if APP_MODE == "recorded":
+        st.caption(labels["recorded_mode"])
 
     st.divider()
     database_heading, refresh_column = st.columns([3, 2])
@@ -512,7 +519,16 @@ if prompt:
             elif response.status_code == 401:
                 st.error(labels["unauthorized"])
             elif response.status_code == 403:
-                st.warning(labels["restricted"])
+                try:
+                    detail = str(response.json().get("detail", ""))
+                except requests.JSONDecodeError:
+                    detail = ""
+                message = (
+                    labels["unsafe"]
+                    if "modification" in detail or "änderung" in detail.casefold()
+                    else labels["restricted"]
+                )
+                st.warning(message)
             elif response.status_code == 429:
                 st.warning(labels["rate_limited"])
             elif response.status_code == 503:

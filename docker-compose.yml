@@ -30,8 +30,9 @@ services:
       DB_NAME: ${POSTGRES_DB:-company_data}
       DB_USER: ai_agent_user
       AI_AGENT_DB_PASSWORD: ${AI_AGENT_DB_PASSWORD:?AI_AGENT_DB_PASSWORD is required}
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY:?GOOGLE_API_KEY is required}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       APP_SECRET_TOKEN: ${APP_SECRET_TOKEN:?APP_SECRET_TOKEN is required}
+      APP_MODE: ${APP_MODE:-live}
       GOOGLE_MODEL: ${GOOGLE_MODEL:-gemini-2.5-flash}
       AGENT_VERBOSE: ${AGENT_VERBOSE:-false}
       AGENT_RECURSION_LIMIT: ${AGENT_RECURSION_LIMIT:-16}
@@ -69,6 +70,7 @@ services:
     environment:
       BACKEND_URL: http://backend:8000/api/v1/query
       APP_SECRET_TOKEN: ${APP_SECRET_TOKEN:?APP_SECRET_TOKEN is required}
+      APP_MODE: ${APP_MODE:-live}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-8501}:8501"
     depends_on:
