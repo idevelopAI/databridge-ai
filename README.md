@@ -235,7 +235,7 @@ measured inside the isolated recorded-mode Compose stack:
 | Recorded execution success | 40/40 (100%) |
 | Recorded result equivalence | 40/40 (100%) |
 | Unsafe-query rejection | 12/12 (100%) |
-| Recorded p50 / p95 latency | 1 ms / 2 ms |
+| Recorded p50 / p95 latency | 1 ms / 3 ms |
 | Recorded model tokens | 0 |
 | Recorded estimated cost/query | $0.000000 |
 | Live Gemini result equivalence | Not run |
@@ -321,6 +321,28 @@ docker compose config --quiet
 
 Tests use isolated SQLite databases and mocked agents, so they do not call Gemini
 or require PostgreSQL.
+
+## Releases
+
+Semantic version tags run the release workflow only after linting and tests pass.
+The workflow builds the backend and frontend images, rejects fixable high and
+critical vulnerabilities, publishes versioned images to GHCR, creates signed
+provenance and SBOM attestations, and attaches SPDX SBOMs, Trivy reports, and
+checksums to the GitHub release.
+
+For version 1.2.0:
+
+```bash
+docker pull ghcr.io/idevelopai/databridge-ai-backend:1.2.0
+docker pull ghcr.io/idevelopai/databridge-ai-frontend:1.2.0
+
+gh attestation verify \
+  oci://ghcr.io/idevelopai/databridge-ai-backend:1.2.0 \
+  --repo idevelopAI/databridge-ai
+```
+
+Container packages and GitHub Actions are public repository services; no hosted
+application or paid cloud infrastructure is required.
 
 ## Security Model
 

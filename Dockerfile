@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim@sha256:db3ff2e1800a8581e2c48a27c3995339d47bdf046da21c7627accd3d51053a93
 
 ENV PIP_NO_CACHE_DIR=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -7,7 +7,8 @@ ENV PIP_NO_CACHE_DIR=1 \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --requirement requirements.txt
+RUN pip install --requirement requirements.txt \
+    && pip uninstall --yes setuptools
 
 COPY agent.py ambiguity.py config.py database.py feedback.py main.py observability.py ./
 COPY privacy_policy.py privacy_policy.json query_log.py query_plan.py rate_limit.py ./

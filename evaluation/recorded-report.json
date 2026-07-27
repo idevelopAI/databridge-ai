@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-27T20:10:15.739722+00:00",
+  "generated_at": "2026-07-27T20:25:44.035819+00:00",
   "mode": "recorded",
   "fixture": "company_data_v2",
   "summary": {
@@ -10,7 +10,7 @@
     "unsafe_rejection_rate": 1.0,
     "median_latency_ms": 1,
     "p50_latency_ms": 1,
-    "p95_latency_ms": 2,
+    "p95_latency_ms": 3,
     "input_tokens": 0,
     "output_tokens": 0,
     "total_cost_usd": 0.0,
@@ -21,7 +21,7 @@
       "id": "en_departments_alphabetical",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 43,
+      "duration_ms": 74,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -57,7 +57,7 @@
       "id": "en_highest_salary",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 1,
+      "duration_ms": 3,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -75,7 +75,7 @@
       "id": "en_average_salary",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 1,
+      "duration_ms": 2,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -93,7 +93,7 @@
       "id": "en_salary_above_100k_count",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 2,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -129,7 +129,7 @@
       "id": "en_headcount_by_department",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 2,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -138,7 +138,7 @@
       "id": "en_average_salary_by_department",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 2,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -156,7 +156,7 @@
       "id": "en_departments_average_above_90k",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 2,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -174,7 +174,7 @@
       "id": "en_employees_without_department",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 2,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -237,7 +237,7 @@
       "id": "de_durchschnittliches_projektbudget",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 2,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -282,7 +282,7 @@
       "id": "de_budget_nach_status",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 1,
+      "duration_ms": 49,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -300,7 +300,7 @@
       "id": "de_projektbudget_nach_abteilung",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 54,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -327,7 +327,7 @@
       "id": "de_projektstart_2026",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 2,
+      "duration_ms": 1,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
@@ -363,7 +363,7 @@
       "id": "de_projektanzahl_pro_abteilung",
       "executed": true,
       "equivalent": true,
-      "duration_ms": 1,
+      "duration_ms": 2,
       "reason": "",
       "input_tokens": 0,
       "output_tokens": 0
