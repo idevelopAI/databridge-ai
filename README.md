@@ -7,6 +7,8 @@ chart, downloadable CSV, and inspectable SQL.
 
 ![DataBridge AI interface](docs/screenshot.jpg)
 
+[![75-second DataBridge AI demo](docs/demo-poster.jpg)](docs/demo.mp4)
+
 ## Capabilities
 
 - Natural-language database questions in English and German
@@ -80,7 +82,8 @@ Recorded mode demonstrates the application workflow and controls. It is not
 reported as live LLM accuracy.
 
 The repeatable 75-second walkthrough is documented in
-[`docs/demo-script.md`](docs/demo-script.md).
+[`docs/demo-script.md`](docs/demo-script.md), and the recorded demonstration is
+available as [`docs/demo.mp4`](docs/demo.mp4).
 
 ## Quick Start
 

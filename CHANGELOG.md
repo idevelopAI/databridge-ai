@@ -22,6 +22,7 @@ All notable changes are documented in this file.
   observability
 - Repeatable 75-second demo sequence covering results, SQL, charts,
   clarification, masking, and unsafe-request rejection
+- Reviewed 75-second MP4 demonstration captured from the synthetic no-key stack
 - Tag-driven GHCR publication with SPDX SBOMs, Trivy vulnerability reports,
   checksums, and signed build and SBOM attestations
 
