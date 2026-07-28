@@ -179,33 +179,57 @@ def describe_tables(
     *,
     engine: Engine | None = None,
 ) -> dict[str, Any]:
-    requested_names = {
+    requested_names = [
         table_name.strip()
         for table_name in table_names.split(",")
         if table_name.strip()
-    }
+    ]
     if not requested_names:
         return {"error": "At least one table name is required."}
 
     schema = filter_schema_by_policy(get_schema_metadata(engine))
-    known_names = {table["name"] for table in schema}
-    unknown_names = sorted(requested_names - known_names)
-    if unknown_names:
-        return {"error": f"Unknown tables: {', '.join(unknown_names)}"}
+    tables_by_reference = {
+        _table_reference(table).casefold(): table for table in schema
+    }
+    tables_by_name: dict[str, list[dict]] = {}
+    for table in schema:
+        tables_by_name.setdefault(str(table["name"]).casefold(), []).append(table)
 
-    return {"tables": [table for table in schema if table["name"] in requested_names]}
+    selected = []
+    invalid_names = []
+    for requested_name in requested_names:
+        normalized = requested_name.casefold()
+        if "." in normalized:
+            table = tables_by_reference.get(normalized)
+        else:
+            matches = tables_by_name.get(normalized, [])
+            table = matches[0] if len(matches) == 1 else None
+        if table is None:
+            invalid_names.append(requested_name)
+        elif table not in selected:
+            selected.append(table)
+    if invalid_names:
+        return {"error": f"Unknown or ambiguous tables: {', '.join(invalid_names)}"}
+
+    return {"tables": selected}
+
+
+def _table_reference(table: dict[str, Any]) -> str:
+    schema_name = str(table.get("schema", "")).strip()
+    table_name = str(table["name"])
+    return f"{schema_name}.{table_name}" if schema_name else table_name
 
 
 @tool("sql_db_list_tables")
 def sql_db_list_tables() -> dict[str, list[str]]:
     """List the PostgreSQL tables available to the read-only database agent."""
     schema = filter_schema_by_policy(get_schema_metadata())
-    return {"tables": [table["name"] for table in schema]}
+    return {"tables": [_table_reference(table) for table in schema]}
 
 
 @tool("sql_db_schema")
 def sql_db_schema(table_names: str) -> dict[str, Any]:
-    """Return columns, keys, and relationships for comma-separated table names."""
+    """Return metadata for comma-separated schema-qualified table names."""
     return describe_tables(table_names)
 
 

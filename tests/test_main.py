@@ -33,6 +33,21 @@ def test_ready_endpoint_checks_application_dependencies(monkeypatch, sqlite_engi
     assert response.json() == {"status": "ready"}
 
 
+def test_ready_endpoint_rejects_configuration_drift(monkeypatch, sqlite_engine):
+    monkeypatch.setattr(main, "get_agent_executor", lambda: FakeAgent())
+    monkeypatch.setattr(main, "get_engine", lambda: sqlite_engine)
+    monkeypatch.setattr(
+        main,
+        "validate_database_configuration",
+        lambda engine: type("Report", (), {"is_valid": False})(),
+    )
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Application is not ready."}
+
+
 def test_ready_endpoint_fails_closed_without_details(monkeypatch):
     class UnavailableEngine:
         def connect(self):

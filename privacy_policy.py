@@ -461,6 +461,10 @@ def _strategy_for_name(name: str) -> MaskStrategy | None:
     return None
 
 
+def detect_mask_strategy(name: str) -> MaskStrategy | None:
+    return _strategy_for_name(name)
+
+
 def _final_select(statement: exp.Expression) -> exp.Select | None:
     if isinstance(statement, exp.Select):
         return statement

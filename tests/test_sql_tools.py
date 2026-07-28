@@ -91,7 +91,27 @@ def test_describe_tables_rejects_unknown_names(sqlite_engine):
 
     output = describe_tables("employees, missing", engine=sqlite_engine)
 
-    assert output == {"error": "Unknown tables: missing"}
+    assert output == {"error": "Unknown or ambiguous tables: missing"}
+
+
+def test_describe_tables_supports_schema_qualified_names(monkeypatch):
+    schema = [
+        {"schema": "sales", "name": "orders", "columns": [], "foreign_keys": []},
+        {
+            "schema": "archive",
+            "name": "orders",
+            "columns": [],
+            "foreign_keys": [],
+        },
+    ]
+    monkeypatch.setattr("sql_tools.get_schema_metadata", lambda engine: schema)
+    monkeypatch.setattr("sql_tools.filter_schema_by_policy", lambda metadata: metadata)
+
+    qualified = describe_tables("sales.orders", engine=object())
+    ambiguous = describe_tables("orders", engine=object())
+
+    assert qualified["tables"] == [schema[0]]
+    assert ambiguous == {"error": "Unknown or ambiguous tables: orders"}
 
 
 def test_decimal_values_are_json_serializable():
