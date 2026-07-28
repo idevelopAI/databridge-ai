@@ -252,7 +252,8 @@ measured inside the isolated recorded-mode Compose stack:
 | Recorded model tokens | 0 |
 | Recorded estimated cost/query | $0.000000 |
 | Live Gemini result equivalence | Not run |
-| Automated tests | 97 passed |
+| Automated tests | 115 passed |
+| Backend test coverage | 82% |
 
 Reproduce the recorded application-path measurement without a provider call:
 
@@ -330,12 +331,13 @@ python -m compileall -q agent.py app.py config.py csv_export.py database.py \
   query_log.py query_plan.py rate_limit.py recorded_demo.py \
   result_formatting.py schema_service.py semantic_layer.py sql_safety.py \
   sql_tools.py unsafe_intent.py evaluation tests
-pytest -q
+pytest -q --cov --cov-report=term-missing:skip-covered
 docker compose config --quiet
 ```
 
 Tests use isolated SQLite databases and mocked agents, so they do not call Gemini
-or require PostgreSQL.
+or require PostgreSQL. CI enforces at least 80% backend coverage and runs the test
+suite on Python 3.11, 3.12, and 3.13.
 
 ## Releases
 

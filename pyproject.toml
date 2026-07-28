@@ -8,6 +8,15 @@ requires-python = ">=3.11"
 pythonpath = ["."]
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["."]
+omit = ["app.py", "tests/*"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
