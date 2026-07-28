@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import sqlglot
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlglot import exp
 from sqlglot.errors import ParseError
 
@@ -211,7 +212,7 @@ def validate_database_configuration(
             schema_metadata=schema_metadata,
             required_tables=set(privacy_policy.tables.allow),
         )
-    except (DatabaseAssuranceError, RuntimeError):
+    except (DatabaseAssuranceError, RuntimeError, SQLAlchemyError):
         return ConfigurationValidationReport(
             issues=("database configuration validation failed",)
         )
