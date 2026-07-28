@@ -21,6 +21,8 @@ chart, downloadable CSV, and inspectable SQL.
 - SQLGlot-based single-statement, read-only query validation
 - PostgreSQL query-plan checks for cost, result size, full scans, and Cartesian joins
 - Configurable table and column access rules with sensitive-value masking
+- Guided PostgreSQL onboarding with schema/table selection and generated policies
+- Startup validation for schema drift and elevated or writable database roles
 - Bounded rows, cells, and result bytes with per-transaction read-only enforcement
 - Constant-time API token validation and per-token request limiting
 - Request IDs, privacy-safe structured events, and authenticated Prometheus metrics
@@ -116,8 +118,9 @@ docker compose down
 ```
 
 `/health` is the process liveness probe. `/ready` additionally validates the
-agent configuration, business glossary, privacy policy, and a database round trip;
-Compose waits for this readiness check before starting the frontend.
+agent configuration, business glossary, privacy policy, PostgreSQL connection,
+configured tables and columns, and read-only role permissions. Compose waits for
+this readiness check before starting the frontend.
 
 Existing database volumes keep their original credentials. After changing a
 database password, synchronize the roles with:
@@ -138,6 +141,63 @@ This deletes both the local PostgreSQL data and locally reviewed feedback.
 Version 1.1 expands the included synthetic fixture with project departments,
 lifecycle status, and dates. Existing installations must recreate the synthetic
 volume once to receive the new columns and evaluation records.
+
+## Database Onboarding
+
+The onboarding command tests a PostgreSQL connection, verifies the current role,
+lists available non-system schemas, and creates initial glossary and privacy
+policy files for selected tables. It does not call Gemini, read table rows, use
+database comments, or print the connection URL or credentials.
+
+With the included Compose database running, execute the command from the local
+virtual environment and override the container hostname:
+
+```bash
+DB_HOST=127.0.0.1 python -m database_setup check
+DB_HOST=127.0.0.1 python -m database_setup configure
+```
+
+The interactive command asks which schemas and tables to allow. A deterministic
+non-interactive setup is also available:
+
+```bash
+DB_HOST=127.0.0.1 python -m database_setup configure \
+  --schema public \
+  --table public.departments \
+  --table public.employees \
+  --table public.projects
+```
+
+The command creates `semantic_layer.generated.json` and
+`privacy_policy.generated.json` with file mode `0600`. Both files are ignored by
+Git and Docker build contexts because schema and column names may be sensitive.
+Existing files are never overwritten unless `--force` is supplied.
+
+Review the generated descriptions, aliases, allowlists, masks, and denylists
+before activation. The generator identifies common credential, identity, contact,
+and compensation column names, but application-specific data classification
+still requires human review. It deliberately does not infer business metrics or
+business terms.
+
+Activate reviewed files in Compose by setting these local `.env` values:
+
+```dotenv
+SEMANTIC_LAYER_HOST_PATH=./semantic_layer.generated.json
+PRIVACY_POLICY_HOST_PATH=./privacy_policy.generated.json
+```
+
+Restart the backend and verify the active configuration:
+
+```bash
+docker compose up -d --build --force-recreate backend frontend
+docker compose exec backend python -m database_setup validate
+```
+
+The database role must be non-superuser, have no role/database creation,
+replication, row-security bypass, schema creation, or table write privileges,
+default to read-only transactions, and have `SELECT` only on every configured
+table. Validation fails closed if a configured table or column is removed or
+renamed.
 
 ## API
 
@@ -174,22 +234,24 @@ project budgets, and the `planned`, `active`, and `completed` project lifecycle.
 The file is validated with Pydantic before use. Invalid or missing glossary data
 fails closed and returns a generic configuration error. Set
 `SEMANTIC_LAYER_PATH` to load a different validated glossary without changing
-application code.
+application code outside Compose. In Compose, use `SEMANTIC_LAYER_HOST_PATH` to
+mount a reviewed file read-only.
 
 ## Ambiguity and Privacy
 
 [`privacy_policy.json`](privacy_policy.json) defines table and column allowlists,
 denylists, explicit masks, restricted question terms, and automatic masking.
 Pydantic validates the policy and SQLGlot enforces it independently of the model.
-Set `PRIVACY_POLICY_PATH` to load another policy.
+Set `PRIVACY_POLICY_PATH` to load another policy outside Compose. In Compose, use
+`PRIVACY_POLICY_HOST_PATH` to mount a reviewed file read-only.
 
 The default policy allows the three synthetic tables only in the `public` schema,
-blocks anticipated secret fields such as password hashes and social-security
+blocks requests for secret concepts such as password hashes and social-security
 numbers, and automatically masks direct email, phone, identifier, and salary
-outputs. Whole-row values and collection aggregates are rejected. Scalar salary
-averages and totals remain visible only when their query enforces the configured
-minimum non-null cohort size. Set `masking.allow_aggregates` to `false` for
-stricter masking.
+outputs. Generated policies also deny discovered secret-like columns. Whole-row
+values and collection aggregates are rejected. Scalar salary averages and totals
+remain visible only when their query enforces the configured minimum non-null
+cohort size. Set `masking.allow_aggregates` to `false` for stricter masking.
 
 Ambiguity detection runs before the model. Requests with an unclear compensation
 basis, date range, aggregation, or department return a focused clarification
@@ -252,7 +314,7 @@ measured inside the isolated recorded-mode Compose stack:
 | Recorded model tokens | 0 |
 | Recorded estimated cost/query | $0.000000 |
 | Live Gemini result equivalence | Not run |
-| Automated tests | 115 passed |
+| Automated tests | 133 passed |
 | Backend test coverage | 82% |
 
 Reproduce the recorded application-path measurement without a provider call:
@@ -329,7 +391,8 @@ ruff format --check .
 pip-audit --requirement requirements-dev.txt
 pip-audit --requirement requirements-frontend.txt
 python -m compileall -q agent.py app.py config.py csv_export.py database.py \
-  ambiguity.py feedback.py main.py observability.py privacy_policy.py \
+  ambiguity.py configuration_validation.py database_assurance.py \
+  database_setup.py feedback.py main.py observability.py privacy_policy.py \
   query_log.py query_plan.py rate_limit.py recorded_demo.py \
   result_formatting.py schema_service.py semantic_layer.py sql_safety.py \
   sql_tools.py unsafe_intent.py evaluation tests
