@@ -10,7 +10,8 @@ COPY requirements.txt .
 RUN pip install --requirement requirements.txt \
     && pip uninstall --yes setuptools
 
-COPY agent.py ambiguity.py config.py database.py feedback.py main.py observability.py ./
+COPY agent.py ambiguity.py config.py configuration_validation.py database.py ./
+COPY database_assurance.py feedback.py main.py observability.py ./
 COPY privacy_policy.py privacy_policy.json query_log.py query_plan.py rate_limit.py ./
 COPY recorded_demo.py result_formatting.py schema_service.py semantic_layer.py ./
 COPY semantic_layer.json sql_safety.py sql_tools.py unsafe_intent.py ./
