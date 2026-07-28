@@ -326,6 +326,8 @@ Run all local checks:
 ```bash
 ruff check .
 ruff format --check .
+pip-audit --requirement requirements-dev.txt
+pip-audit --requirement requirements-frontend.txt
 python -m compileall -q agent.py app.py config.py csv_export.py database.py \
   ambiguity.py feedback.py main.py observability.py privacy_policy.py \
   query_log.py query_plan.py rate_limit.py recorded_demo.py \
