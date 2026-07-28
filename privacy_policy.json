@@ -11,25 +11,11 @@
   },
   "columns": {
     "allow": [],
-    "deny": [
-      "public.employees.password_hash",
-      "public.employees.private_notes",
-      "public.employees.ssn"
-    ],
+    "deny": [],
     "mask": {
       "public.employees.salary": "salary"
     },
-    "restricted_terms": {
-      "public.employees.password_hash": ["password hash", "Passwort-Hash"],
-      "public.employees.private_notes": ["private notes", "private Notizen"],
-      "public.employees.ssn": [
-        "social security number",
-        "social security numbers",
-        "SSN",
-        "Sozialversicherungsnummer",
-        "Sozialversicherungsnummern"
-      ]
-    }
+    "restricted_terms": {}
   },
   "masking": {
     "enabled": true,
@@ -37,5 +23,16 @@
     "allow_aggregates": true,
     "minimum_aggregate_group_size": 2,
     "replacement": "***"
-  }
+  },
+  "question_deny_terms": [
+    "password hash",
+    "Passwort-Hash",
+    "private notes",
+    "private Notizen",
+    "social security number",
+    "social security numbers",
+    "SSN",
+    "Sozialversicherungsnummer",
+    "Sozialversicherungsnummern"
+  ]
 }

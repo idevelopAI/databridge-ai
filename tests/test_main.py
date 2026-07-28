@@ -21,6 +21,11 @@ def test_health_endpoint():
 def test_ready_endpoint_checks_application_dependencies(monkeypatch, sqlite_engine):
     monkeypatch.setattr(main, "get_agent_executor", lambda: FakeAgent())
     monkeypatch.setattr(main, "get_engine", lambda: sqlite_engine)
+    monkeypatch.setattr(
+        main,
+        "validate_database_configuration",
+        lambda engine: type("Report", (), {"is_valid": True})(),
+    )
 
     response = client.get("/ready")
 
