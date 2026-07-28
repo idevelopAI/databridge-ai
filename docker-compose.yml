@@ -46,8 +46,8 @@ services:
       MAX_QUERY_PLAN_ROWS: ${MAX_QUERY_PLAN_ROWS:-10000}
       MAX_SEQUENTIAL_SCAN_ROWS: ${MAX_SEQUENTIAL_SCAN_ROWS:-50000}
       MAX_CARTESIAN_JOIN_ROWS: ${MAX_CARTESIAN_JOIN_ROWS:-10000}
-      SEMANTIC_LAYER_PATH: ${SEMANTIC_LAYER_PATH:-/app/semantic_layer.json}
-      PRIVACY_POLICY_PATH: ${PRIVACY_POLICY_PATH:-/app/privacy_policy.json}
+      SEMANTIC_LAYER_PATH: /app/semantic_layer.runtime.json
+      PRIVACY_POLICY_PATH: /app/privacy_policy.runtime.json
       FEEDBACK_DB_PATH: ${FEEDBACK_DB_PATH:-/data/feedback.db}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
@@ -64,6 +64,14 @@ services:
       - no-new-privileges:true
     volumes:
       - feedback_data:/data
+      - type: bind
+        source: ${SEMANTIC_LAYER_HOST_PATH:-./semantic_layer.json}
+        target: /app/semantic_layer.runtime.json
+        read_only: true
+      - type: bind
+        source: ${PRIVACY_POLICY_HOST_PATH:-./privacy_policy.json}
+        target: /app/privacy_policy.runtime.json
+        read_only: true
     restart: unless-stopped
 
   frontend:

@@ -17,3 +17,5 @@ data/
 tests/
 .DS_Store
 databridge-reviewed-examples.jsonl
+semantic_layer.generated.json
+privacy_policy.generated.json
