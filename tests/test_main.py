@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
 
 import main
 
@@ -16,6 +17,32 @@ def test_health_endpoint():
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_ready_endpoint_checks_application_dependencies(monkeypatch):
+    engine = create_engine("sqlite:///:memory:")
+    monkeypatch.setattr(main, "get_agent_executor", lambda: FakeAgent())
+    monkeypatch.setattr(main, "get_engine", lambda: engine)
+
+    response = client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_ready_endpoint_fails_closed_without_details(monkeypatch):
+    class UnavailableEngine:
+        def connect(self):
+            raise RuntimeError("private database host")
+
+    monkeypatch.setattr(main, "get_agent_executor", lambda: FakeAgent())
+    monkeypatch.setattr(main, "get_engine", lambda: UnavailableEngine())
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Application is not ready."}
+    assert "private database host" not in response.text
 
 
 def test_query_rejects_missing_api_key(monkeypatch):

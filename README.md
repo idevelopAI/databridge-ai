@@ -115,6 +115,10 @@ docker compose ps
 docker compose down
 ```
 
+`/health` is the process liveness probe. `/ready` additionally validates the
+agent configuration, business glossary, privacy policy, and a database round trip;
+Compose waits for this readiness check before starting the frontend.
+
 Existing database volumes keep their original credentials. After changing a
 database password, synchronize the roles with:
 

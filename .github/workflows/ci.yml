@@ -65,7 +65,7 @@ jobs:
 
       - name: Verify local services
         run: |
-          curl --fail --silent http://localhost:8000/health
+          curl --fail --silent http://localhost:8000/ready
           curl --fail --silent http://localhost:8501/_stcore/health
           curl --fail --silent \
             --header "X-API-Key: $APP_SECRET_TOKEN" \

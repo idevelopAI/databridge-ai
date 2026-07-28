@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from agent import get_agent_executor
 from ambiguity import detect_ambiguity
 from config import get_app_secret_token
+from database import get_engine
 from feedback import iter_feedback_jsonl, store_feedback
 from observability import (
     CURRENT_REQUEST_ID,
@@ -173,11 +174,15 @@ def health() -> dict[str, str]:
 def ready() -> dict[str, str]:
     try:
         get_agent_executor()
+        get_semantic_layer_data()
+        get_privacy_policy_data()
+        with get_engine().connect() as connection:
+            connection.exec_driver_sql("SELECT 1").scalar_one()
         return {"status": "ready"}
-    except RuntimeError:
-        logger.error("Agent readiness check failed")
+    except Exception:
+        logger.error("Application readiness check failed")
         raise HTTPException(
-            status_code=503, detail="Agent is not configured."
+            status_code=503, detail="Application is not ready."
         ) from None
 
 
