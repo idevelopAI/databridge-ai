@@ -47,8 +47,7 @@ def test_direct_salary_is_masked_but_large_enough_aggregate_is_not():
         [["Alice", 75000]],
     )
     aggregate_rows = mask_result_rows(
-        "SELECT AVG(salary) AS average_salary FROM employees "
-        "HAVING COUNT(salary) >= 2",
+        "SELECT AVG(salary) AS average_salary FROM employees HAVING COUNT(salary) >= 2",
         ["average_salary"],
         [[87166.67]],
     )
@@ -83,8 +82,7 @@ def test_masked_aggregate_requires_minimum_non_null_cohort():
         "SELECT AVG(salary) AS average_salary FROM employees HAVING COUNT(*) >= 2"
     )
     valid_cohort = validate_sql_privacy(
-        "SELECT AVG(salary) AS average_salary FROM employees "
-        "HAVING COUNT(salary) >= 2"
+        "SELECT AVG(salary) AS average_salary FROM employees HAVING COUNT(salary) >= 2"
     )
 
     assert missing_cohort.reason_code == "aggregate_cohort"
