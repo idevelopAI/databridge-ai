@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from agent import get_agent_executor
 from ambiguity import detect_ambiguity
 from config import get_app_secret_token
+from configuration_validation import validate_database_configuration
 from database import get_engine
 from feedback import iter_feedback_jsonl, store_feedback
 from observability import (
@@ -176,8 +177,9 @@ def ready() -> dict[str, str]:
         get_agent_executor()
         get_semantic_layer_data()
         get_privacy_policy_data()
-        with get_engine().connect() as connection:
-            connection.exec_driver_sql("SELECT 1").scalar_one()
+        validation = validate_database_configuration(get_engine())
+        if not validation.is_valid:
+            raise RuntimeError("Database configuration is invalid.")
         return {"status": "ready"}
     except Exception:
         logger.error("Application readiness check failed")

@@ -66,6 +66,7 @@ class PrivacyPolicy(BaseModel):
     tables: AccessRules
     columns: ColumnRules
     masking: MaskingRules = Field(default_factory=MaskingRules)
+    question_deny_terms: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_access_lists(self):
@@ -103,21 +104,23 @@ def _normalize_text(value: str) -> str:
     return " ".join(re.sub(r"[^\w]+", " ", value.casefold()).split())
 
 
-def _privacy_policy_path() -> Path:
+def get_privacy_policy_path() -> Path:
     configured_path = os.environ.get("PRIVACY_POLICY_PATH")
     if configured_path:
         return Path(configured_path)
     return Path(__file__).with_name("privacy_policy.json")
 
 
-@lru_cache(maxsize=1)
-def get_privacy_policy() -> PrivacyPolicy:
+def load_privacy_policy(path: Path) -> PrivacyPolicy:
     try:
-        return PrivacyPolicy.model_validate_json(
-            _privacy_policy_path().read_text(encoding="utf-8")
-        )
+        return PrivacyPolicy.model_validate_json(path.read_text(encoding="utf-8"))
     except (OSError, ValidationError, ValueError) as exc:
         raise RuntimeError("The privacy policy could not be loaded.") from exc
+
+
+@lru_cache(maxsize=1)
+def get_privacy_policy() -> PrivacyPolicy:
+    return load_privacy_policy(get_privacy_policy_path())
 
 
 def get_privacy_policy_data() -> dict[str, Any]:
@@ -136,6 +139,7 @@ def restricted_question_reason(question: str) -> str | None:
         term for terms in policy.columns.restricted_terms.values() for term in terms
     ]
     restricted_phrases.extend(policy.tables.deny)
+    restricted_phrases.extend(policy.question_deny_terms)
     for phrase in restricted_phrases:
         candidate = _normalize_text(phrase.replace("_", " "))
         if candidate and f" {candidate} " in normalized:

@@ -37,21 +37,23 @@ class SemanticLayer(BaseModel):
     terms: dict[str, TermSemantic] = Field(default_factory=dict)
 
 
-def _semantic_layer_path() -> Path:
+def get_semantic_layer_path() -> Path:
     configured_path = os.environ.get("SEMANTIC_LAYER_PATH")
     if configured_path:
         return Path(configured_path)
     return Path(__file__).with_name("semantic_layer.json")
 
 
-@lru_cache(maxsize=1)
-def get_semantic_layer() -> SemanticLayer:
+def load_semantic_layer(path: Path) -> SemanticLayer:
     try:
-        return SemanticLayer.model_validate_json(
-            _semantic_layer_path().read_text(encoding="utf-8")
-        )
+        return SemanticLayer.model_validate_json(path.read_text(encoding="utf-8"))
     except (OSError, ValidationError, ValueError) as exc:
         raise RuntimeError("The business glossary could not be loaded.") from exc
+
+
+@lru_cache(maxsize=1)
+def get_semantic_layer() -> SemanticLayer:
+    return load_semantic_layer(get_semantic_layer_path())
 
 
 def get_semantic_layer_data() -> dict:
