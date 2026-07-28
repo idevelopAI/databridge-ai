@@ -71,6 +71,18 @@ def get_max_result_rows() -> int:
     return _get_positive_int("MAX_RESULT_ROWS", 100)
 
 
+def get_max_result_bytes() -> int:
+    return _get_positive_int("MAX_RESULT_BYTES", 1_000_000)
+
+
+def get_max_cell_bytes() -> int:
+    return _get_positive_int("MAX_CELL_BYTES", 16_384)
+
+
+def get_statement_timeout_ms() -> int:
+    return _get_positive_int("DB_STATEMENT_TIMEOUT_MS", 10_000)
+
+
 def get_agent_recursion_limit() -> int:
     return _get_positive_int("AGENT_RECURSION_LIMIT", 16)
 

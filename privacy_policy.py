@@ -314,9 +314,7 @@ def _validate_masked_aggregates(
         )
         for projection in select.expressions:
             aggregates = list(projection.find_all(exp.AggFunc))
-            masked_references = _masked_references(
-                projection, aliases, tables, policy
-            )
+            masked_references = _masked_references(projection, aliases, tables, policy)
             if not aggregates or not masked_references:
                 continue
             if not policy.masking.allow_aggregates or not all(
@@ -334,9 +332,7 @@ def _validate_masked_aggregates(
                 reference
                 for aggregate in aggregates
                 if not isinstance(aggregate, exp.Count)
-                for reference in _masked_references(
-                    aggregate, aliases, tables, policy
-                )
+                for reference in _masked_references(aggregate, aliases, tables, policy)
             }
             if not aggregate_references <= cohort_references:
                 return PrivacyDecision(
@@ -368,9 +364,7 @@ def validate_sql_privacy(query: str) -> PrivacyDecision:
             "The query requests a table restricted by the privacy policy.",
         )
 
-    aggregate_decision = _validate_masked_aggregates(
-        statement, aliases, tables, policy
-    )
+    aggregate_decision = _validate_masked_aggregates(statement, aliases, tables, policy)
     if aggregate_decision is not None:
         return aggregate_decision
 
@@ -424,7 +418,9 @@ def filter_schema_by_policy(schema: list[dict[str, Any]]) -> list[dict[str, Any]
 
     for table in schema:
         table_name = _identifier(table["name"])
-        schema_name = _identifier(table.get("schema", policy.default_schema))
+        schema_name = _identifier(
+            table.get("schema", policy.default_schema)
+        ) or _identifier(policy.default_schema)
         table_reference = f"{schema_name}.{table_name}"
         if table_reference in denied_tables or (
             allowed_tables and table_reference not in allowed_tables

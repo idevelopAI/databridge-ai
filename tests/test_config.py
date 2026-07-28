@@ -2,9 +2,12 @@ import pytest
 
 from config import (
     get_database_url,
+    get_max_cell_bytes,
     get_max_query_plan_cost,
     get_max_query_plan_rows,
+    get_max_result_bytes,
     get_max_result_rows,
+    get_statement_timeout_ms,
     is_query_plan_guard_enabled,
 )
 
@@ -40,6 +43,16 @@ def test_max_result_rows_rejects_zero(monkeypatch):
 
     with pytest.raises(RuntimeError, match="greater than zero"):
         get_max_result_rows()
+
+
+def test_execution_bounds_use_configured_positive_integers(monkeypatch):
+    monkeypatch.setenv("MAX_RESULT_BYTES", "2048")
+    monkeypatch.setenv("MAX_CELL_BYTES", "256")
+    monkeypatch.setenv("DB_STATEMENT_TIMEOUT_MS", "750")
+
+    assert get_max_result_bytes() == 2048
+    assert get_max_cell_bytes() == 256
+    assert get_statement_timeout_ms() == 750
 
 
 def test_query_plan_limits_use_configured_values(monkeypatch):

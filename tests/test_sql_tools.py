@@ -1,9 +1,12 @@
 from decimal import Decimal
+from unittest.mock import Mock
 
 from sqlalchemy import create_engine, text
 
 from query_log import CURRENT_SQL_EXECUTIONS
 from sql_tools import (
+    _bound_result_rows,
+    _configure_postgresql_transaction,
     _json_value,
     describe_tables,
     execute_read_only_query,
@@ -39,6 +42,32 @@ def test_read_only_query_caps_rows():
 
     assert output["rows"] == [[1], [2]]
     assert output["truncated"] is True
+
+
+def test_result_cells_and_total_bytes_are_bounded():
+    rows, truncated = _bound_result_rows(
+        ["value"],
+        [["abcdefghijk"], ["second row"]],
+        max_cell_bytes=8,
+        max_result_bytes=21,
+    )
+
+    assert rows == [["abcde..."]]
+    assert truncated is True
+
+
+def test_postgresql_transaction_is_read_only_and_has_local_timeout(monkeypatch):
+    monkeypatch.setenv("DB_STATEMENT_TIMEOUT_MS", "750")
+    connection = Mock()
+
+    _configure_postgresql_transaction(connection)
+
+    statements = [str(call.args[0]) for call in connection.execute.call_args_list]
+    assert statements == [
+        "SET TRANSACTION READ ONLY",
+        "SELECT set_config('statement_timeout', :timeout, true)",
+    ]
+    assert connection.execute.call_args_list[1].args[1] == {"timeout": "750ms"}
 
 
 def test_unsafe_query_is_not_executed_or_recorded():
@@ -112,8 +141,7 @@ def test_salary_aggregates_remain_usable():
         connection.execute(text("INSERT INTO employees VALUES (75000), (85000)"))
 
     output = execute_read_only_query(
-        "SELECT AVG(salary) AS average_salary FROM employees "
-        "HAVING COUNT(salary) >= 2",
+        "SELECT AVG(salary) AS average_salary FROM employees HAVING COUNT(salary) >= 2",
         engine=engine,
         max_rows=10,
     )

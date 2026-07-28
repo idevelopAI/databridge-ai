@@ -21,7 +21,7 @@ chart, downloadable CSV, and inspectable SQL.
 - SQLGlot-based single-statement, read-only query validation
 - PostgreSQL query-plan checks for cost, result size, full scans, and Cartesian joins
 - Configurable table and column access rules with sensitive-value masking
-- Bounded result sets, statement timeouts, and a database role limited to `SELECT`
+- Bounded rows, cells, and result bytes with per-transaction read-only enforcement
 - Constant-time API token validation and per-token request limiting
 - Request IDs, privacy-safe structured events, and authenticated Prometheus metrics
 - Correct/incorrect query feedback with local JSONL export
@@ -363,9 +363,10 @@ DataBridge AI uses several independent controls:
    checks; direct sensitive outputs are masked before reaching the model or UI.
 4. Accepted SQL must pass configurable PostgreSQL query-plan limits before it can
    execute.
-5. The agent database role has `SELECT` privileges, read-only transactions, and
-   short server-side timeouts.
-6. Query output is capped before it is returned to the agent or UI.
+5. Every PostgreSQL execution uses a read-only transaction with a local statement
+   timeout, in addition to the agent role's `SELECT` privileges and role defaults.
+6. Query rows, individual cells, and total serialized result bytes are capped
+   before data is returned to the agent or UI.
 7. Database and plan errors are converted to generic messages before they reach
    the model or browser.
 8. Metrics and structured events omit prompts, SQL, credentials, and returned
