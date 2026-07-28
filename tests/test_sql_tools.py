@@ -1,7 +1,7 @@
 from decimal import Decimal
 from unittest.mock import Mock
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 from query_log import CURRENT_SQL_EXECUTIONS
 from sql_tools import (
@@ -13,15 +13,14 @@ from sql_tools import (
 )
 
 
-def test_read_only_query_records_structured_execution():
-    engine = create_engine("sqlite:///:memory:")
+def test_read_only_query_records_structured_execution(sqlite_engine):
     executions = []
     token = CURRENT_SQL_EXECUTIONS.set(executions)
 
     try:
         output = execute_read_only_query(
             "SELECT 1 AS value",
-            engine=engine,
+            engine=sqlite_engine,
             max_rows=10,
         )
     finally:
@@ -34,11 +33,10 @@ def test_read_only_query_records_structured_execution():
     assert executions == [output]
 
 
-def test_read_only_query_caps_rows():
-    engine = create_engine("sqlite:///:memory:")
+def test_read_only_query_caps_rows(sqlite_engine):
     query = "SELECT 1 AS value UNION ALL SELECT 2 UNION ALL SELECT 3"
 
-    output = execute_read_only_query(query, engine=engine, max_rows=2)
+    output = execute_read_only_query(query, engine=sqlite_engine, max_rows=2)
 
     assert output["rows"] == [[1], [2]]
     assert output["truncated"] is True
@@ -70,15 +68,14 @@ def test_postgresql_transaction_is_read_only_and_has_local_timeout(monkeypatch):
     assert connection.execute.call_args_list[1].args[1] == {"timeout": "750ms"}
 
 
-def test_unsafe_query_is_not_executed_or_recorded():
-    engine = create_engine("sqlite:///:memory:")
+def test_unsafe_query_is_not_executed_or_recorded(sqlite_engine):
     executions = []
     token = CURRENT_SQL_EXECUTIONS.set(executions)
 
     try:
         output = execute_read_only_query(
             "DROP TABLE employees",
-            engine=engine,
+            engine=sqlite_engine,
             max_rows=10,
         )
     finally:
@@ -88,12 +85,11 @@ def test_unsafe_query_is_not_executed_or_recorded():
     assert executions == []
 
 
-def test_describe_tables_rejects_unknown_names():
-    engine = create_engine("sqlite:///:memory:")
-    with engine.begin() as connection:
+def test_describe_tables_rejects_unknown_names(sqlite_engine):
+    with sqlite_engine.begin() as connection:
         connection.execute(text("CREATE TABLE employees (id INTEGER PRIMARY KEY)"))
 
-    output = describe_tables("employees, missing", engine=engine)
+    output = describe_tables("employees, missing", engine=sqlite_engine)
 
     assert output == {"error": "Unknown tables: missing"}
 
@@ -102,12 +98,10 @@ def test_decimal_values_are_json_serializable():
     assert _json_value(Decimal("120000.25")) == 120000.25
 
 
-def test_database_errors_do_not_expose_driver_details():
-    engine = create_engine("sqlite:///:memory:")
-
+def test_database_errors_do_not_expose_driver_details(sqlite_engine):
     output = execute_read_only_query(
         "SELECT confidential_column FROM employees",
-        engine=engine,
+        engine=sqlite_engine,
         max_rows=10,
     )
 
@@ -119,30 +113,28 @@ def test_database_errors_do_not_expose_driver_details():
     }
 
 
-def test_direct_salary_values_are_masked_before_recording():
-    engine = create_engine("sqlite:///:memory:")
-    with engine.begin() as connection:
+def test_direct_salary_values_are_masked_before_recording(sqlite_engine):
+    with sqlite_engine.begin() as connection:
         connection.execute(text("CREATE TABLE employees (name TEXT, salary INT)"))
         connection.execute(text("INSERT INTO employees VALUES ('Alice', 75000)"))
 
     output = execute_read_only_query(
         "SELECT name, salary FROM employees",
-        engine=engine,
+        engine=sqlite_engine,
         max_rows=10,
     )
 
     assert output["rows"] == [["Alice", "***"]]
 
 
-def test_salary_aggregates_remain_usable():
-    engine = create_engine("sqlite:///:memory:")
-    with engine.begin() as connection:
+def test_salary_aggregates_remain_usable(sqlite_engine):
+    with sqlite_engine.begin() as connection:
         connection.execute(text("CREATE TABLE employees (salary INT)"))
         connection.execute(text("INSERT INTO employees VALUES (75000), (85000)"))
 
     output = execute_read_only_query(
         "SELECT AVG(salary) AS average_salary FROM employees HAVING COUNT(salary) >= 2",
-        engine=engine,
+        engine=sqlite_engine,
         max_rows=10,
     )
 

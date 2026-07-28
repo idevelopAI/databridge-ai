@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 
 import main
 
@@ -19,10 +18,9 @@ def test_health_endpoint():
     assert response.json() == {"status": "ok"}
 
 
-def test_ready_endpoint_checks_application_dependencies(monkeypatch):
-    engine = create_engine("sqlite:///:memory:")
+def test_ready_endpoint_checks_application_dependencies(monkeypatch, sqlite_engine):
     monkeypatch.setattr(main, "get_agent_executor", lambda: FakeAgent())
-    monkeypatch.setattr(main, "get_engine", lambda: engine)
+    monkeypatch.setattr(main, "get_engine", lambda: sqlite_engine)
 
     response = client.get("/ready")
 

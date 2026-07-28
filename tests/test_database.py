@@ -1,11 +1,10 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
 from database import get_schema_metadata
 
 
-def test_schema_metadata_includes_keys_and_relationships():
-    engine = create_engine("sqlite:///:memory:")
-    with engine.begin() as connection:
+def test_schema_metadata_includes_keys_and_relationships(sqlite_engine):
+    with sqlite_engine.begin() as connection:
         connection.execute(
             text("CREATE TABLE departments (id INTEGER PRIMARY KEY, name TEXT)")
         )
@@ -18,7 +17,7 @@ def test_schema_metadata_includes_keys_and_relationships():
             )
         )
 
-    schema = get_schema_metadata(engine)
+    schema = get_schema_metadata(sqlite_engine)
     employees = next(table for table in schema if table["name"] == "employees")
     columns = {column["name"]: column for column in employees["columns"]}
 

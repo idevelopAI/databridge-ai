@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from contextlib import closing
 
 from feedback import iter_feedback_jsonl, store_feedback
 
@@ -14,7 +15,7 @@ def test_feedback_database_stores_only_required_fields(monkeypatch, tmp_path):
         "correct",
     )
 
-    with sqlite3.connect(database_path) as connection:
+    with closing(sqlite3.connect(database_path)) as connection:
         columns = [
             row[1] for row in connection.execute("PRAGMA table_info(query_feedback)")
         ]
