@@ -20,3 +20,5 @@ postgres_data/
 data/
 feedback_exports/
 databridge-reviewed-examples.jsonl
+semantic_layer.generated.json
+privacy_policy.generated.json

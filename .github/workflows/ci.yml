@@ -120,6 +120,8 @@ jobs:
             --header "X-API-Key: $APP_SECRET_TOKEN" \
             http://localhost:8000/metrics \
             | grep --quiet 'databridge_requests_total'
+          docker compose exec --no-TTY backend python -m database_setup check
+          docker compose exec --no-TTY backend python -m database_setup validate
           docker compose exec --no-TTY backend python -m evaluation.run
 
       - name: Show service logs
