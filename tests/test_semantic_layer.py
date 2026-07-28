@@ -13,6 +13,7 @@ def test_default_semantic_layer_defines_active_projects():
     assert layer.version == 1
     assert layer.terms["active_project"].condition == "projects.status = 'active'"
     assert layer.metrics["average_salary"].expression == "AVG(employees.salary)"
+    assert layer.metrics["average_salary"].minimum_group_size == 2
 
 
 def test_context_matches_german_metric_and_tables():

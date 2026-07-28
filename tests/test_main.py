@@ -256,7 +256,7 @@ def test_privacy_endpoint_returns_active_policy(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["masking"]["enabled"] is True
-    assert "employees.salary" in response.json()["columns"]["mask"]
+    assert "public.employees.salary" in response.json()["columns"]["mask"]
 
 
 def test_feedback_is_stored_and_exported_locally(monkeypatch, tmp_path):

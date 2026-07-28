@@ -73,6 +73,7 @@ KNOWN_REJECTION_STAGES = {
 }
 KNOWN_REJECTION_REASONS = {
     "agent_error",
+    "aggregate_cohort",
     "aggregation",
     "compensation_basis",
     "configuration",

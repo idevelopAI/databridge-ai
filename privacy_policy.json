@@ -1,23 +1,28 @@
 {
   "version": 1,
+  "default_schema": "public",
   "tables": {
-    "allow": ["departments", "employees", "projects"],
+    "allow": [
+      "public.departments",
+      "public.employees",
+      "public.projects"
+    ],
     "deny": []
   },
   "columns": {
     "allow": [],
     "deny": [
-      "employees.password_hash",
-      "employees.private_notes",
-      "employees.ssn"
+      "public.employees.password_hash",
+      "public.employees.private_notes",
+      "public.employees.ssn"
     ],
     "mask": {
-      "employees.salary": "salary"
+      "public.employees.salary": "salary"
     },
     "restricted_terms": {
-      "employees.password_hash": ["password hash", "Passwort-Hash"],
-      "employees.private_notes": ["private notes", "private Notizen"],
-      "employees.ssn": [
+      "public.employees.password_hash": ["password hash", "Passwort-Hash"],
+      "public.employees.private_notes": ["private notes", "private Notizen"],
+      "public.employees.ssn": [
         "social security number",
         "social security numbers",
         "SSN",
@@ -30,6 +35,7 @@
     "enabled": true,
     "auto_detect": true,
     "allow_aggregates": true,
+    "minimum_aggregate_group_size": 2,
     "replacement": "***"
   }
 }

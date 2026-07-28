@@ -72,7 +72,7 @@
       "id": "en_average_salary",
       "language": "en",
       "question": "What is the average salary across all employees?",
-      "expected_sql": "SELECT ROUND(AVG(salary), 2) AS average_salary FROM employees",
+      "expected_sql": "SELECT ROUND(AVG(salary), 2) AS average_salary FROM employees HAVING COUNT(salary) >= 2",
       "expected": {
         "columns": ["average_salary"],
         "rows": [[87166.67]]
@@ -83,7 +83,7 @@
       "id": "en_total_payroll",
       "language": "en",
       "question": "What is the total annual payroll?",
-      "expected_sql": "SELECT SUM(salary) AS total_salary FROM employees",
+      "expected_sql": "SELECT SUM(salary) AS total_salary FROM employees HAVING COUNT(salary) >= 2",
       "expected": {
         "columns": ["total_salary"],
         "rows": [[1046000]]
@@ -127,7 +127,7 @@
       "id": "en_engineering_average_salary",
       "language": "en",
       "question": "What is the average salary in Engineering?",
-      "expected_sql": "SELECT ROUND(AVG(e.salary), 2) AS average_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Engineering'",
+      "expected_sql": "SELECT ROUND(AVG(e.salary), 2) AS average_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Engineering' HAVING COUNT(e.salary) >= 2",
       "expected": {
         "columns": ["average_salary"],
         "rows": [[106666.67]]
@@ -149,7 +149,7 @@
       "id": "en_average_salary_by_department",
       "language": "en",
       "question": "Show average salary by department from highest to lowest.",
-      "expected_sql": "SELECT d.name AS department, ROUND(AVG(e.salary), 2) AS average_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name ORDER BY average_salary DESC, d.name",
+      "expected_sql": "SELECT d.name AS department, ROUND(AVG(e.salary), 2) AS average_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name HAVING COUNT(e.salary) >= 2 ORDER BY average_salary DESC, d.name",
       "expected": {
         "columns": ["department", "average_salary"],
         "rows": [["Engineering", 106666.67], ["Finance", 104000], ["Marketing", 79000], ["Sales", 78333.33], ["HR", 62500]]
@@ -160,7 +160,7 @@
       "id": "en_payroll_by_department",
       "language": "en",
       "question": "Show total payroll by department from highest to lowest.",
-      "expected_sql": "SELECT d.name AS department, SUM(e.salary) AS total_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name ORDER BY total_salary DESC, d.name",
+      "expected_sql": "SELECT d.name AS department, SUM(e.salary) AS total_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name HAVING COUNT(e.salary) >= 2 ORDER BY total_salary DESC, d.name",
       "expected": {
         "columns": ["department", "total_salary"],
         "rows": [["Engineering", 320000], ["Sales", 235000], ["Finance", 208000], ["Marketing", 158000], ["HR", 125000]]
@@ -171,7 +171,7 @@
       "id": "en_departments_average_above_90k",
       "language": "en",
       "question": "Which departments have an average salary above 90000 euros?",
-      "expected_sql": "SELECT d.name AS department, ROUND(AVG(e.salary), 2) AS average_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name HAVING AVG(e.salary) > 90000 ORDER BY average_salary DESC, d.name",
+      "expected_sql": "SELECT d.name AS department, ROUND(AVG(e.salary), 2) AS average_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name HAVING AVG(e.salary) > 90000 AND COUNT(e.salary) >= 2 ORDER BY average_salary DESC, d.name",
       "expected": {
         "columns": ["department", "average_salary"],
         "rows": [["Engineering", 106666.67], ["Finance", 104000]]
@@ -215,7 +215,7 @@
       "id": "en_sales_payroll",
       "language": "en",
       "question": "What is the total payroll for Sales?",
-      "expected_sql": "SELECT SUM(e.salary) AS total_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Sales'",
+      "expected_sql": "SELECT SUM(e.salary) AS total_salary FROM employees e JOIN departments d ON d.id = e.department_id WHERE d.name = 'Sales' HAVING COUNT(e.salary) >= 2",
       "expected": {
         "columns": ["total_salary"],
         "rows": [[235000]]

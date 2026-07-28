@@ -120,6 +120,7 @@ class SchemaForeignKey(BaseModel):
 
 
 class SchemaTable(BaseModel):
+    schema: str = ""
     name: str
     columns: list[SchemaColumn]
     foreign_keys: list[SchemaForeignKey] = Field(default_factory=list)

@@ -20,6 +20,7 @@ class TableSemantic(SemanticEntry):
 class MetricSemantic(SemanticEntry):
     expression: str = Field(min_length=1)
     tables: list[str] = Field(min_length=1)
+    minimum_group_size: int | None = Field(default=None, ge=2)
 
 
 class TermSemantic(SemanticEntry):

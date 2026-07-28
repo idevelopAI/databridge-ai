@@ -61,6 +61,7 @@ def get_schema_metadata(engine: Engine | None = None) -> list[dict]:
 
         tables.append(
             {
+                "schema": schema_name or "",
                 "name": table_name,
                 "columns": columns,
                 "foreign_keys": foreign_keys,

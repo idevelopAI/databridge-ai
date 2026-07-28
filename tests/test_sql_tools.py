@@ -112,7 +112,8 @@ def test_salary_aggregates_remain_usable():
         connection.execute(text("INSERT INTO employees VALUES (75000), (85000)"))
 
     output = execute_read_only_query(
-        "SELECT AVG(salary) AS average_salary FROM employees",
+        "SELECT AVG(salary) AS average_salary FROM employees "
+        "HAVING COUNT(salary) >= 2",
         engine=engine,
         max_rows=10,
     )

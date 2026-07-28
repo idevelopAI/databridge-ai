@@ -11,6 +11,17 @@ from sqlglot import exp
 from sqlglot.errors import ParseError
 
 MaskStrategy = Literal["email", "identifier", "phone", "salary"]
+COLLECTION_AGGREGATE_NAMES = {
+    "array_agg",
+    "json_agg",
+    "json_object_agg",
+    "jsonb_agg",
+    "jsonb_object_agg",
+    "string_agg",
+    "xmlagg",
+}
+COLLECTION_AGGREGATE_TYPES = (exp.ArrayAgg, exp.JSONArrayAgg, exp.GroupConcat)
+SAFE_MASKED_AGGREGATE_TYPES = (exp.Avg, exp.Count, exp.Sum)
 
 
 class AccessRules(BaseModel):
@@ -43,6 +54,7 @@ class MaskingRules(BaseModel):
     enabled: bool = True
     auto_detect: bool = True
     allow_aggregates: bool = True
+    minimum_aggregate_group_size: int = Field(default=2, ge=2)
     replacement: str = Field(default="***", min_length=1, max_length=32)
 
 
@@ -50,17 +62,29 @@ class PrivacyPolicy(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: int = Field(ge=1)
+    default_schema: str = Field(default="public", min_length=1)
     tables: AccessRules
     columns: ColumnRules
     masking: MaskingRules = Field(default_factory=MaskingRules)
 
     @model_validator(mode="after")
-    def access_lists_do_not_overlap(self):
+    def validate_access_lists(self):
         for rules in (self.tables, self.columns):
             allowed = {_identifier(value) for value in rules.allow}
             denied = {_identifier(value) for value in rules.deny}
             if allowed & denied:
                 raise ValueError("Privacy allowlists and denylists must not overlap.")
+        table_references = [*self.tables.allow, *self.tables.deny]
+        if any(reference.count(".") != 1 for reference in table_references):
+            raise ValueError("Privacy table references must be schema-qualified.")
+        column_references = [
+            *self.columns.allow,
+            *self.columns.deny,
+            *self.columns.mask,
+            *self.columns.restricted_terms,
+        ]
+        if any(reference.count(".") != 2 for reference in column_references):
+            raise ValueError("Privacy column references must be schema-qualified.")
         return self
 
 
@@ -129,7 +153,19 @@ def _parse_sql(query: str) -> exp.Expression:
     return statement
 
 
-def _table_context(statement: exp.Expression) -> tuple[dict[str, str], set[str]]:
+def _qualified_table_name(table: exp.Table, default_schema: str) -> str:
+    table_name = _identifier(table.name)
+    schema_name = _identifier(table.db) or _identifier(default_schema)
+    catalog_name = _identifier(table.catalog)
+    if catalog_name:
+        return f"{catalog_name}.{schema_name}.{table_name}"
+    return f"{schema_name}.{table_name}"
+
+
+def _table_context(
+    statement: exp.Expression,
+    default_schema: str,
+) -> tuple[dict[str, str], set[str]]:
     cte_names = {
         _identifier(cte.alias_or_name)
         for cte in statement.find_all(exp.CTE)
@@ -141,9 +177,11 @@ def _table_context(statement: exp.Expression) -> tuple[dict[str, str], set[str]]
         table_name = _identifier(table.name)
         if table_name in cte_names:
             continue
-        tables.add(table_name)
-        aliases[_identifier(table.alias_or_name)] = table_name
-        aliases[table_name] = table_name
+        qualified_name = _qualified_table_name(table, default_schema)
+        tables.add(qualified_name)
+        aliases[_identifier(table.alias_or_name)] = qualified_name
+        aliases[table_name] = qualified_name
+        aliases[qualified_name] = qualified_name
     return aliases, tables
 
 
@@ -161,6 +199,154 @@ def _column_reference(
     return None
 
 
+def _function_name(function: exp.Func) -> str:
+    if function.name:
+        return _identifier(function.name)
+    return _identifier(function.sql(dialect="postgres").split("(", 1)[0])
+
+
+def _is_collection_aggregate(function: exp.Func) -> bool:
+    return isinstance(function, COLLECTION_AGGREGATE_TYPES) or (
+        _function_name(function) in COLLECTION_AGGREGATE_NAMES
+    )
+
+
+def _is_whole_row_reference(column: exp.Column, aliases: dict[str, str]) -> bool:
+    return not column.table and _identifier(column.name) in aliases
+
+
+def _mask_strategy_for_column(
+    column: exp.Column,
+    aliases: dict[str, str],
+    tables: set[str],
+    policy: PrivacyPolicy,
+) -> MaskStrategy | None:
+    explicit_masks = {
+        _identifier(reference): strategy
+        for reference, strategy in policy.columns.mask.items()
+    }
+    reference = _column_reference(column, aliases, tables)
+    if reference and reference in explicit_masks:
+        return explicit_masks[reference]
+    if policy.masking.auto_detect:
+        return _strategy_for_name(column.name)
+    return None
+
+
+def _masked_references(
+    expression: exp.Expression,
+    aliases: dict[str, str],
+    tables: set[str],
+    policy: PrivacyPolicy,
+) -> set[str]:
+    references = set()
+    for column in expression.find_all(exp.Column):
+        if not _mask_strategy_for_column(column, aliases, tables, policy):
+            continue
+        reference = _column_reference(column, aliases, tables)
+        if reference:
+            references.add(reference)
+    return references
+
+
+def _minimum_cohort_references(
+    select: exp.Select,
+    aliases: dict[str, str],
+    tables: set[str],
+    minimum_size: int,
+) -> set[str]:
+    having = select.args.get("having")
+    if having is None or having.find(exp.Or):
+        return set()
+
+    references = set()
+    for comparison_type, inclusive_adjustment in ((exp.GTE, 0), (exp.GT, 1)):
+        for comparison in having.find_all(comparison_type):
+            count = comparison.this
+            threshold = comparison.expression
+            if not isinstance(count, exp.Count) or not isinstance(
+                threshold, exp.Literal
+            ):
+                continue
+            try:
+                threshold_value = int(threshold.this) + inclusive_adjustment
+            except (TypeError, ValueError):
+                continue
+            if threshold_value < minimum_size:
+                continue
+            for column in count.find_all(exp.Column):
+                reference = _column_reference(column, aliases, tables)
+                if reference:
+                    references.add(reference)
+    return references
+
+
+def _validate_masked_aggregates(
+    statement: exp.Expression,
+    aliases: dict[str, str],
+    tables: set[str],
+    policy: PrivacyPolicy,
+) -> PrivacyDecision | None:
+    for function in statement.find_all(exp.Func):
+        if _is_collection_aggregate(function):
+            return PrivacyDecision(
+                False,
+                "restricted_column",
+                "Collection aggregates are blocked by the privacy policy.",
+            )
+
+    if any(
+        _is_whole_row_reference(column, aliases)
+        for column in statement.find_all(exp.Column)
+    ):
+        return PrivacyDecision(
+            False,
+            "restricted_column",
+            "Whole-row values are blocked by the privacy policy.",
+        )
+
+    for select in statement.find_all(exp.Select):
+        cohort_references = _minimum_cohort_references(
+            select,
+            aliases,
+            tables,
+            policy.masking.minimum_aggregate_group_size,
+        )
+        for projection in select.expressions:
+            aggregates = list(projection.find_all(exp.AggFunc))
+            masked_references = _masked_references(
+                projection, aliases, tables, policy
+            )
+            if not aggregates or not masked_references:
+                continue
+            if not policy.masking.allow_aggregates or not all(
+                isinstance(aggregate, SAFE_MASKED_AGGREGATE_TYPES)
+                for aggregate in aggregates
+            ):
+                return PrivacyDecision(
+                    False,
+                    "restricted_column",
+                    "The aggregate requests a masked field.",
+                )
+            if all(isinstance(aggregate, exp.Count) for aggregate in aggregates):
+                continue
+            aggregate_references = {
+                reference
+                for aggregate in aggregates
+                if not isinstance(aggregate, exp.Count)
+                for reference in _masked_references(
+                    aggregate, aliases, tables, policy
+                )
+            }
+            if not aggregate_references <= cohort_references:
+                return PrivacyDecision(
+                    False,
+                    "aggregate_cohort",
+                    "The aggregate does not enforce the minimum cohort size.",
+                )
+    return None
+
+
 def validate_sql_privacy(query: str) -> PrivacyDecision:
     policy = get_privacy_policy()
     try:
@@ -172,7 +358,7 @@ def validate_sql_privacy(query: str) -> PrivacyDecision:
             "The query could not be inspected by the privacy policy.",
         )
 
-    aliases, tables = _table_context(statement)
+    aliases, tables = _table_context(statement, policy.default_schema)
     allowed_tables = {_identifier(value) for value in policy.tables.allow}
     denied_tables = {_identifier(value) for value in policy.tables.deny}
     if tables & denied_tables or (allowed_tables and not tables <= allowed_tables):
@@ -181,6 +367,12 @@ def validate_sql_privacy(query: str) -> PrivacyDecision:
             "restricted_table",
             "The query requests a table restricted by the privacy policy.",
         )
+
+    aggregate_decision = _validate_masked_aggregates(
+        statement, aliases, tables, policy
+    )
+    if aggregate_decision is not None:
+        return aggregate_decision
 
     allowed_columns = {_identifier(value) for value in policy.columns.allow}
     denied_columns = {_identifier(value) for value in policy.columns.deny}
@@ -232,13 +424,15 @@ def filter_schema_by_policy(schema: list[dict[str, Any]]) -> list[dict[str, Any]
 
     for table in schema:
         table_name = _identifier(table["name"])
-        if table_name in denied_tables or (
-            allowed_tables and table_name not in allowed_tables
+        schema_name = _identifier(table.get("schema", policy.default_schema))
+        table_reference = f"{schema_name}.{table_name}"
+        if table_reference in denied_tables or (
+            allowed_tables and table_reference not in allowed_tables
         ):
             continue
         visible_columns = []
         for column in table.get("columns", []):
-            reference = f"{table_name}.{_identifier(column['name'])}"
+            reference = f"{table_reference}.{_identifier(column['name'])}"
             if reference in denied_columns or (
                 allowed_columns and reference not in allowed_columns
             ):
@@ -280,21 +474,47 @@ def _projection_mask_strategy(
     tables: set[str],
     policy: PrivacyPolicy,
 ) -> MaskStrategy | None:
-    if policy.masking.allow_aggregates and projection.find(exp.AggFunc):
-        return None
-
-    explicit_masks = {
-        _identifier(reference): strategy
-        for reference, strategy in policy.columns.mask.items()
-    }
+    masked_strategy = None
     for column in projection.find_all(exp.Column):
-        reference = _column_reference(column, aliases, tables)
-        if reference and reference in explicit_masks:
-            return explicit_masks[reference]
-        if policy.masking.auto_detect:
-            strategy = _strategy_for_name(column.name)
-            if strategy:
-                return strategy
+        strategy = _mask_strategy_for_column(column, aliases, tables, policy)
+        if strategy:
+            masked_strategy = strategy
+            break
+
+    aggregates = list(projection.find_all(exp.AggFunc))
+    if masked_strategy and aggregates:
+        select = projection.find_ancestor(exp.Select)
+        cohort_references = (
+            _minimum_cohort_references(
+                select,
+                aliases,
+                tables,
+                policy.masking.minimum_aggregate_group_size,
+            )
+            if select is not None
+            else set()
+        )
+        aggregate_references = {
+            reference
+            for aggregate in aggregates
+            if not isinstance(aggregate, exp.Count)
+            for reference in _masked_references(aggregate, aliases, tables, policy)
+        }
+        if (
+            policy.masking.allow_aggregates
+            and all(
+                isinstance(aggregate, SAFE_MASKED_AGGREGATE_TYPES)
+                for aggregate in aggregates
+            )
+            and (
+                all(isinstance(aggregate, exp.Count) for aggregate in aggregates)
+                or aggregate_references <= cohort_references
+            )
+        ):
+            return None
+
+    if masked_strategy:
+        return masked_strategy
 
     if policy.masking.auto_detect:
         return _strategy_for_name(output_name)
@@ -315,7 +535,7 @@ def mask_result_rows(
     except ValueError:
         return [[policy.masking.replacement for _ in row] for row in rows]
 
-    aliases, tables = _table_context(statement)
+    aliases, tables = _table_context(statement, policy.default_schema)
     select = _final_select(statement)
     projections = select.expressions if select is not None else []
     mask_indexes = set()

@@ -178,11 +178,13 @@ denylists, explicit masks, restricted question terms, and automatic masking.
 Pydantic validates the policy and SQLGlot enforces it independently of the model.
 Set `PRIVACY_POLICY_PATH` to load another policy.
 
-The default policy allows the three synthetic tables, blocks anticipated secret
-fields such as password hashes and social-security numbers, and automatically
-masks direct email, phone, identifier, and salary outputs. Aggregate salary
-metrics remain visible by default because they do not expose a direct employee
-value. Set `masking.allow_aggregates` to `false` for stricter masking.
+The default policy allows the three synthetic tables only in the `public` schema,
+blocks anticipated secret fields such as password hashes and social-security
+numbers, and automatically masks direct email, phone, identifier, and salary
+outputs. Whole-row values and collection aggregates are rejected. Scalar salary
+averages and totals remain visible only when their query enforces the configured
+minimum non-null cohort size. Set `masking.allow_aggregates` to `false` for
+stricter masking.
 
 Ambiguity detection runs before the model. Requests with an unclear compensation
 basis, date range, aggregation, or department return a focused clarification

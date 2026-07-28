@@ -77,7 +77,8 @@
       "description": "Arithmetic mean of non-null employee annual salaries.",
       "aliases": ["average salary", "mean salary", "Durchschnittsgehalt", "durchschnittliche Gehalt", "durchschnittliches Gehalt", "mittleres Gehalt"],
       "expression": "AVG(employees.salary)",
-      "tables": ["employees"]
+      "tables": ["employees"],
+      "minimum_group_size": 2
     },
     "employee_count": {
       "description": "Number of employees, counted by employees.id.",
@@ -89,7 +90,8 @@
       "description": "Sum of non-null annual employee salaries.",
       "aliases": ["total salary", "payroll", "Gehaltskosten", "Gehaltssumme"],
       "expression": "SUM(employees.salary)",
-      "tables": ["employees"]
+      "tables": ["employees"],
+      "minimum_group_size": 2
     },
     "project_count": {
       "description": "Number of projects, counted by projects.id.",
