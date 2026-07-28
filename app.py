@@ -474,12 +474,19 @@ for message_index, message in enumerate(st.session_state.messages):
 typed_prompt = st.chat_input(labels["input"])
 prompt = selected_example or typed_prompt
 if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    user_message = {
+        "role": "user",
+        "content": prompt,
+        "accepted_for_context": False,
+    }
+    st.session_state.messages.append(user_message)
     with st.chat_message("user"):
         st.markdown(prompt)
 
     history_lines = []
     for message in st.session_state.messages[:-1][-6:]:
+        if not message.get("accepted_for_context", True):
+            continue
         role = "User" if message["role"] == "user" else "Assistant"
         history_lines.append(f"{role}: {message['content']}")
     history = "\n".join(history_lines)[-4000:]
@@ -498,8 +505,10 @@ if prompt:
             )
             if response.status_code == 200:
                 payload = response.json()
+                user_message["accepted_for_context"] = True
                 assistant_message = {
                     "role": "assistant",
+                    "accepted_for_context": True,
                     "content": payload.get("answer", labels["request_failed"]),
                     "executions": payload.get("executions", []),
                     "duration_ms": payload.get("duration_ms", 0),

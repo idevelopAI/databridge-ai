@@ -120,7 +120,9 @@ class SchemaForeignKey(BaseModel):
 
 
 class SchemaTable(BaseModel):
-    schema: str = ""
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_name: str = Field(default="", alias="schema", serialization_alias="schema")
     name: str
     columns: list[SchemaColumn]
     foreign_keys: list[SchemaForeignKey] = Field(default_factory=list)
@@ -128,7 +130,7 @@ class SchemaTable(BaseModel):
 
 def build_agent_prompt(request: QueryRequest) -> str:
     answer_language = "German" if request.language == "de" else "English"
-    history = request.chat_history or "No previous messages."
+    history = sanitize_chat_history(request.chat_history, request.language)
     semantic_context = semantic_context_for_question(request.question)
     trusted_context = json.dumps(semantic_context, ensure_ascii=False, indent=2)
     return f"""
@@ -143,6 +145,23 @@ Current question:
 
 Return the final answer in {answer_language}.
 """.strip()
+
+
+def sanitize_chat_history(
+    history: str,
+    language: Literal["de", "en"],
+) -> str:
+    safe_lines = []
+    for line in history.splitlines():
+        content = line.split(":", 1)[-1].strip()
+        if not content:
+            continue
+        if restricted_question_reason(content):
+            continue
+        if detect_unsafe_intent(content, language):
+            continue
+        safe_lines.append(line)
+    return "\n".join(safe_lines)[-4000:] or "No previous messages."
 
 
 @app.get("/health")
@@ -296,24 +315,6 @@ def ask_database(
             )
             raise HTTPException(status_code=403, detail=unsafe_intent.message)
 
-        clarification = detect_ambiguity(request.question, request.language)
-        if clarification is not None:
-            duration = perf_counter() - started_at
-            record_rejection("ambiguity", clarification.code)
-            record_request("clarification", duration)
-            log_query_event(
-                event="clarification_required",
-                outcome="clarification",
-                duration_ms=round(duration * 1000),
-                rejection_reason=clarification.code,
-            )
-            return QueryResponse(
-                status="clarification_required",
-                answer=clarification.question,
-                duration_ms=round(duration * 1000),
-                request_id=get_request_id(),
-            )
-
         try:
             restricted_reason = restricted_question_reason(request.question)
         except RuntimeError:
@@ -343,6 +344,24 @@ def ask_database(
             raise HTTPException(
                 status_code=403,
                 detail="This question requests data restricted by the privacy policy.",
+            )
+
+        clarification = detect_ambiguity(request.question, request.language)
+        if clarification is not None:
+            duration = perf_counter() - started_at
+            record_rejection("ambiguity", clarification.code)
+            record_request("clarification", duration)
+            log_query_event(
+                event="clarification_required",
+                outcome="clarification",
+                duration_ms=round(duration * 1000),
+                rejection_reason=clarification.code,
+            )
+            return QueryResponse(
+                status="clarification_required",
+                answer=clarification.question,
+                duration_ms=round(duration * 1000),
+                request_id=get_request_id(),
             )
 
         response = get_agent_executor().invoke({"input": build_agent_prompt(request)})
