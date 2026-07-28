@@ -20,6 +20,9 @@ records in the report.
 ## Secret Handling
 
 - Keep `.env` local. It is ignored by Git and excluded from Docker build contexts.
+- Keep generated glossary and privacy files local unless their schema metadata is
+  approved for publication. Default generated files are Git-ignored and mode
+  `0600`.
 - Use unique values for every password and token in `.env`.
 - Rotate a secret immediately if it appears in a commit, log, screenshot, issue, or
   message.
@@ -56,6 +59,11 @@ Privacy controls are defined in `privacy_policy.json`. Keep denylists and masks 
 source control, keep secrets out of the policy, and test policy changes before
 connecting a different schema. Database permissions remain the final enforcement
 boundary and must not be replaced by model instructions.
+
+Run `python -m database_setup check` before onboarding a database and
+`python -m database_setup validate` after every schema or policy change. The
+application rejects elevated or writable roles, and readiness fails when
+configured tables or columns no longer exist.
 
 Release assets, screenshots, evaluation reports, SBOMs, and scan reports must be
 reviewed for credentials and real records before publication. Only the included
