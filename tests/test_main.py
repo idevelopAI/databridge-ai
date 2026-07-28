@@ -53,7 +53,7 @@ def test_query_validates_whitespace_only_question(monkeypatch):
     assert response.status_code == 422
 
 
-def test_query_returns_agent_answer(monkeypatch):
+def test_query_rejects_agent_answer_without_verified_execution(monkeypatch):
     monkeypatch.setenv("APP_SECRET_TOKEN", "correct-token")
     monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "100")
     monkeypatch.setattr(main, "get_agent_executor", lambda: FakeAgent())
@@ -64,13 +64,11 @@ def test_query_returns_agent_answer(monkeypatch):
         headers={"X-API-Key": "correct-token"},
     )
 
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["answer"] == "Das Ergebnis ist 42."
-    assert payload["executions"] == []
-    assert isinstance(payload["duration_ms"], int)
-    assert payload["request_id"] == response.headers["X-Request-ID"]
-    assert len(payload["request_id"]) == 32
+    assert response.status_code == 502
+    assert response.json() == {
+        "detail": "The database agent did not produce a verified result."
+    }
+    assert len(response.headers["X-Request-ID"]) == 32
 
 
 def test_query_completes_answer_from_structured_result(monkeypatch):

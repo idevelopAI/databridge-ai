@@ -374,6 +374,21 @@ def ask_database(
             if isinstance(raw_telemetry, dict)
             else AgentTelemetry()
         )
+        if not executions:
+            duration = perf_counter() - started_at
+            record_rejection("agent", "ungrounded_answer")
+            record_request("error", duration)
+            log_query_event(
+                event="query_failed",
+                outcome="error",
+                duration_ms=round(duration * 1000),
+                telemetry=telemetry,
+                rejection_reason="ungrounded_answer",
+            )
+            raise HTTPException(
+                status_code=502,
+                detail="The database agent did not produce a verified result.",
+            )
         clean_answer = ensure_answer_includes_result(
             str(raw_output),
             executions,

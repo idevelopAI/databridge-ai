@@ -146,9 +146,10 @@ curl --request POST http://localhost:8000/api/v1/query \
   --data '{"question":"What is the average annual gross salary by department?","language":"en"}'
 ```
 
-Responses include the natural-language answer, every executed SQL statement,
-structured rows, truncation state, request ID, model duration, tool-call count,
-and provider-reported token usage. Ambiguous questions return
+Successful responses require at least one accepted SQL execution and include the
+natural-language answer, every executed SQL statement, structured rows,
+truncation state, request ID, model duration, tool-call count, and
+provider-reported token usage. Ambiguous questions return
 `clarification_required` without calling the model. Schema metadata is available
 from `GET /api/v1/schema` with the same API key.
 

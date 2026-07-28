@@ -93,6 +93,7 @@ KNOWN_REJECTION_REASONS = {
     "sql_parse",
     "sql_prohibited",
     "unsafe_intent",
+    "ungrounded_answer",
     "uninspectable_sql",
     "wildcard_selection",
 }
