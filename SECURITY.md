@@ -60,3 +60,6 @@ boundary and must not be replaced by model instructions.
 Release assets, screenshots, evaluation reports, SBOMs, and scan reports must be
 reviewed for credentials and real records before publication. Only the included
 synthetic fixture may appear in public demo material.
+
+GitHub Actions and third-party container images are pinned to immutable commits
+or registry digests. Review and scan each replacement before updating a pin.

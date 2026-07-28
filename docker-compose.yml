@@ -90,7 +90,7 @@ services:
     restart: unless-stopped
 
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4@sha256:40fa840c5bb7c8463957f1255b01283732c2d8c9396a956d180f8e6c296753b3
     profiles:
       - admin
     environment:
