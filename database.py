@@ -69,7 +69,6 @@ def get_schema_metadata(
                         "type": str(column["type"]),
                         "nullable": bool(column.get("nullable", True)),
                         "flags": flags,
-                        "comment": column.get("comment"),
                     }
                 )
 
@@ -84,17 +83,10 @@ def get_schema_metadata(
                     }
                 )
 
-            try:
-                table_comment = inspector.get_table_comment(
-                    table_name, schema=schema_name
-                ).get("text")
-            except NotImplementedError:
-                table_comment = None
             tables.append(
                 {
                     "schema": schema_name or "",
                     "name": table_name,
-                    "comment": table_comment,
                     "columns": columns,
                     "foreign_keys": foreign_keys,
                 }
