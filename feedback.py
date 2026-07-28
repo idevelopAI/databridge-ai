@@ -1,6 +1,7 @@
 import json
 import sqlite3
 from collections.abc import Iterator
+from contextlib import closing
 from typing import Literal
 
 from config import get_feedback_db_path
@@ -31,7 +32,7 @@ def store_feedback(
     generated_sql: str,
     rating: FeedbackRating,
 ) -> None:
-    with _connect() as connection:
+    with closing(_connect()) as connection, connection:
         connection.execute(
             "INSERT INTO query_feedback (question, generated_sql, feedback) "
             "VALUES (?, ?, ?)",
@@ -40,7 +41,7 @@ def store_feedback(
 
 
 def iter_feedback_jsonl() -> Iterator[str]:
-    with _connect() as connection:
+    with closing(_connect()) as connection:
         cursor = connection.execute(
             "SELECT question, generated_sql, feedback "
             "FROM query_feedback ORDER BY rowid"
