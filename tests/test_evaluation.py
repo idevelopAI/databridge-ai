@@ -2,7 +2,8 @@ from pathlib import Path
 
 from evaluation.comparison import compare_execution
 from evaluation.models import ExpectedResult, load_dataset
-from evaluation.run import _offline_case, _report
+from evaluation.run import _live_case, _offline_case, _report
+from query_log import record_sql_execution
 
 
 def test_evaluation_dataset_has_bilingual_coverage():
@@ -81,6 +82,70 @@ def test_offline_report_includes_sql_only_when_requested(monkeypatch):
     result = _offline_case(case, include_sql=True)
 
     assert result["sql"] == case.expected_sql
+
+
+def test_live_case_compares_unmasked_evaluation_replay(monkeypatch):
+    case = load_dataset(Path("evaluation/cases.json")).cases[4]
+
+    class MaskedAgent:
+        def invoke(self, payload):
+            del payload
+            record_sql_execution(
+                {
+                    "sql": case.expected_sql,
+                    "columns": case.expected.columns,
+                    "rows": [["***"]],
+                    "row_count": 1,
+                    "truncated": False,
+                    "duration_ms": 1,
+                }
+            )
+            return {"output": "masked", "telemetry": {}}
+
+    def replay(query, **kwargs):
+        assert query == case.expected_sql
+        assert kwargs["mask_results"] is False
+        return {
+            "columns": case.expected.columns,
+            "rows": case.expected.rows,
+        }
+
+    monkeypatch.setattr("evaluation.run.execute_read_only_query", replay)
+
+    result = _live_case(case, MaskedAgent(), include_sql=False)
+
+    assert result["executed"] is True
+    assert result["equivalent"] is True
+
+
+def test_live_case_reports_failed_evaluation_replay(monkeypatch):
+    case = load_dataset(Path("evaluation/cases.json")).cases[0]
+
+    class Agent:
+        def invoke(self, payload):
+            del payload
+            record_sql_execution(
+                {
+                    "sql": case.expected_sql,
+                    "columns": case.expected.columns,
+                    "rows": case.expected.rows,
+                    "row_count": len(case.expected.rows),
+                    "truncated": False,
+                    "duration_ms": 1,
+                }
+            )
+            return {"output": "answer", "telemetry": {}}
+
+    monkeypatch.setattr(
+        "evaluation.run.execute_read_only_query",
+        lambda query, **kwargs: {"error": "rejected"},
+    )
+
+    result = _live_case(case, Agent(), include_sql=False)
+
+    assert result["executed"] is True
+    assert result["equivalent"] is False
+    assert result["reason"] == "evaluation replay failed"
 
 
 def test_report_calculates_tokens_latency_and_cost():

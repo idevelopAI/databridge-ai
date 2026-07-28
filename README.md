@@ -259,7 +259,9 @@ docker compose exec backend python -m evaluation.run --recorded
 This deterministic baseline validates the fixture, database path, and execution
 controls; it is not presented as model accuracy. Live Text-to-SQL evaluation is
 explicitly opt-in and calls the configured Gemini model once or more per selected
-case:
+case. For accurate comparison, accepted read-only SQL is replayed without display
+masking in memory; run this mode only against the included synthetic evaluation
+database:
 
 ```bash
 docker compose exec backend python -m evaluation.run --live --limit 5 \

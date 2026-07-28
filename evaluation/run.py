@@ -110,13 +110,16 @@ def _live_case(
         output_tokens = 0
 
     execution = executions[-1]
-    comparison = compare_execution(execution, case.expected)
+    replay = execute_read_only_query(execution.get("sql", ""), mask_results=False)
+    comparison = (
+        compare_execution(replay, case.expected) if "error" not in replay else None
+    )
     result = {
         "id": case.id,
         "executed": True,
-        "equivalent": comparison.equivalent,
+        "equivalent": comparison.equivalent if comparison else False,
         "duration_ms": duration_ms,
-        "reason": comparison.reason,
+        "reason": comparison.reason if comparison else "evaluation replay failed",
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
     }
@@ -268,7 +271,10 @@ def main() -> int:
 
         mode = "live"
         print(
-            f"Live mode: the configured model provider will receive {len(cases)} cases."
+            "Live mode: the configured model provider will receive "
+            f"{len(cases)} cases. "
+            "Accepted SQL is replayed without display masking in memory; use only "
+            "the synthetic evaluation database."
         )
         agent_context = nullcontext(get_agent_executor())
     elif args.recorded:
