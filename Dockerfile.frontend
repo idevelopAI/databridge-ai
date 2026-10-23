@@ -11,6 +11,7 @@ RUN pip install --requirement requirements-frontend.txt \
     && pip uninstall --yes setuptools
 
 COPY app.py csv_export.py ./
+COPY frontend/ frontend/
 COPY .streamlit/ .streamlit/
 
 RUN useradd --create-home --shell /usr/sbin/nologin appuser
