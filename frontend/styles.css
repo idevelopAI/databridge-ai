@@ -17,6 +17,7 @@ html, body, h1, h2, h3, h4, p, button, input, textarea {
 [data-testid="stSidebar"] {
     background: #f8f9f7;
     border-right: 1px solid var(--db-line);
+    transition: none;
 }
 [data-testid="stSidebarHeader"] { height: 2rem; }
 [data-testid="stSidebarUserContent"] { padding: 1rem 0.6rem; }
