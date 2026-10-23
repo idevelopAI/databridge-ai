@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -45,7 +46,8 @@ def frontend(monkeypatch):
     monkeypatch.setattr(requests, "get", get)
     monkeypatch.setattr(requests, "post", post)
     st.cache_data.clear()
-    app = AppTest.from_file("app.py", default_timeout=10).run()
+    app_path = Path(__file__).resolve().parents[1] / "app.py"
+    app = AppTest.from_file(app_path, default_timeout=10).run()
     assert not app.exception
     yield app, get, post
     st.cache_data.clear()
@@ -53,6 +55,7 @@ def frontend(monkeypatch):
 
 def test_query_results_and_export_keep_composer_available(frontend):
     app, _, post = frontend
+    assert sum(str(button.key).startswith("example-") for button in app.button) == 3
     app.button(key="example-0").click().run()
     assert not app.exception
     assert len(app.dataframe) == 1
@@ -60,6 +63,7 @@ def test_query_results_and_export_keep_composer_available(frontend):
     assert len(app.chat_input) == 1
     assert app.code[0].value == ANSWER["executions"][0]["sql"]
     assert post.call_args.kwargs["json"]["chat_history"] == ""
+    assert not any(str(button.key).startswith("example-") for button in app.button)
 
 
 def test_clarification_can_be_answered_with_context(frontend):
@@ -101,6 +105,7 @@ def test_new_chat_and_restore_do_not_reexecute_queries(frontend):
     app.button(key="new-chat").click().run()
     assert app.session_state["active_conversation"] != original
     assert len(app.chat_message) == 0
+    assert sum(str(button.key).startswith("example-") for button in app.button) == 3
     app.button(key=f"conversation-{original}").click().run()
     assert not app.exception
     assert len(app.dataframe) == 1

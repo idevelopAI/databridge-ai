@@ -1,6 +1,6 @@
 -r requirements.txt
 -r requirements-frontend.txt
-httpx2==2.7.0
+httpx2==2.16.0
 pip-audit==2.10.1
 pytest==9.1.1
 pytest-cov==7.1.0
