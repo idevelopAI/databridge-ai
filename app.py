@@ -1,4 +1,7 @@
 import os
+from html import escape
+from pathlib import Path
+from uuid import uuid4
 
 import pandas as pd
 import requests
@@ -9,165 +12,137 @@ from csv_export import rows_to_csv
 
 st.set_page_config(
     page_title="DataBridge AI",
-    page_icon="🌉",
+    page_icon=":material/database:",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="auto",
 )
-
-st.markdown(
-    """
-    <style>
-    .block-container {
-        max-width: 1180px;
-        padding-top: 1.4rem;
-        padding-bottom: 2rem;
-    }
-    [data-testid="stSidebar"] {
-        border-right: 1px solid #dce2e8;
-        min-width: 20rem !important;
-        max-width: 20rem !important;
-    }
-    [data-testid="stSidebar"] > div:first-child {
-        width: 20rem !important;
-    }
-    [data-testid="stChatMessage"] {
-        border: 1px solid #e0e5ea;
-        border-radius: 6px;
-        padding: 0.75rem 1rem;
-        background: #ffffff;
-    }
-    [data-testid="stChatInput"] {
-        border-color: #b8c4ce;
-    }
-    .db-status {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        color: #43515e;
-        font-size: 0.86rem;
-        margin-bottom: 1rem;
-    }
-    .db-status-dot {
-        width: 0.55rem;
-        height: 0.55rem;
-        border-radius: 50%;
-        background: #16825d;
-    }
-    .stAppDeployButton {
-        display: none;
-    }
-    [data-testid="stSidebar"] h1 {
-        font-size: 1.7rem;
-        line-height: 1.2;
-    }
-    [data-testid="stMain"] h1 {
-        font-size: 2.25rem;
-        line-height: 1.15;
-    }
-    [data-testid="stMain"] [data-testid="stButton"] button {
-        min-height: 3.5rem;
-    }
-    h1, h2, h3 {
-        letter-spacing: 0;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+stylesheet = Path(__file__).with_name("frontend") / "styles.css"
+st.html(f"<style>{stylesheet.read_text()}</style>")
 
 TEXT = {
-    "de": {
-        "tagline": "Frag deine PostgreSQL-Datenbank in natürlicher Sprache.",
-        "connected": "PostgreSQL verbunden · Nur Lesezugriff",
-        "database": "Datenbank",
-        "schema": "Schema",
-        "refresh": "Aktualisieren",
-        "schema_error": "Das Schema ist gerade nicht erreichbar.",
-        "examples": "Beispielfragen",
-        "clear": "Chat leeren",
-        "input": "Frage zu Mitarbeitern, Abteilungen oder Projekten",
-        "working": "Schema prüfen, SQL erstellen und Ergebnis verifizieren ...",
-        "unauthorized": (
-            "Die interne API-Authentifizierung ist nicht korrekt konfiguriert."
-        ),
-        "rate_limited": "Zu viele Anfragen. Bitte warte kurz und versuche es erneut.",
-        "unavailable": "Der Datenbank-Agent ist noch nicht bereit.",
-        "request_failed": "Die Anfrage konnte nicht verarbeitet werden.",
-        "restricted": (
-            "Diese Anfrage betrifft durch die Datenschutzrichtlinie gesperrte Daten."
-        ),
-        "unsafe": "Datenbankänderungen sind nicht erlaubt.",
-        "connection_failed": "Das Backend ist nicht erreichbar.",
-        "table": "Tabelle",
-        "chart": "Diagramm",
-        "sql": "SQL",
-        "download": "CSV herunterladen",
-        "no_rows": "Die Abfrage hat keine Zeilen zurückgegeben.",
-        "rows": "Zeilen",
-        "truncated": "Ergebnis gekürzt",
-        "correct": "Korrekt",
-        "incorrect": "Falsch",
-        "feedback_saved": "Feedback gespeichert",
-        "feedback_failed": "Feedback konnte nicht gespeichert werden.",
-        "feedback": "Feedback",
-        "export_feedback": "Geprüfte Beispiele exportieren",
-        "recorded_mode": "Aufgezeichnete Demo · Keine Modellaufrufe",
-        "examples_list": [
-            "Wer verdient am meisten im Engineering?",
-            "Wie hoch ist das durchschnittliche Gehalt pro Abteilung?",
-            "Welche Projekte haben das höchste Budget?",
-        ],
-    },
     "en": {
-        "tagline": "Ask your PostgreSQL database questions in plain language.",
-        "connected": "PostgreSQL connected · Read-only access",
+        "workspace": "Workspace",
+        "ask": "Ask DataBridge",
+        "schema": "Database schema",
+        "new": "New chat",
+        "popular": "Suggested questions",
+        "recent": "Recent chats",
+        "no_chats": "No conversations yet",
+        "session": "This session",
+        "connected": "Connected",
+        "offline": "Unavailable",
+        "readonly": "Read-only",
         "database": "Database",
-        "schema": "Schema",
-        "refresh": "Refresh",
-        "schema_error": "The schema is currently unavailable.",
-        "examples": "Example questions",
-        "clear": "Clear chat",
-        "input": "Ask about employees, departments, or projects",
-        "working": "Inspecting the schema, writing SQL, and verifying the result ...",
-        "unauthorized": "Internal API authentication is not configured correctly.",
-        "rate_limited": "Too many requests. Wait briefly and try again.",
-        "unavailable": "The database agent is not ready yet.",
-        "request_failed": "The request could not be processed.",
-        "restricted": "This request includes data blocked by the privacy policy.",
-        "unsafe": "Database modifications are not allowed.",
-        "connection_failed": "The backend is unavailable.",
+        "tables": "tables",
+        "columns": "columns",
+        "refresh": "Refresh schema",
+        "search": "Find a table",
+        "no_tables": "No matching tables",
+        "schema_error": "The database schema is unavailable.",
+        "input": "Ask a question about your data...",
+        "reply": "Your clarification...",
+        "working": "Querying the database...",
+        "welcome": "A new conversation with your data.",
+        "empty": "No query results yet",
+        "you": "You",
+        "result": "Query result",
         "table": "Table",
         "chart": "Chart",
         "sql": "SQL",
         "download": "Download CSV",
-        "no_rows": "The query returned no rows.",
+        "no_rows": "This query returned no rows.",
         "rows": "rows",
-        "truncated": "Result truncated",
-        "correct": "Correct",
-        "incorrect": "Incorrect",
+        "truncated": "Result limit reached",
+        "correct": "Mark correct",
+        "incorrect": "Mark incorrect",
         "feedback_saved": "Feedback saved",
         "feedback_failed": "Feedback could not be saved.",
-        "feedback": "Feedback",
-        "export_feedback": "Export reviewed examples",
-        "recorded_mode": "Recorded demo · No model calls",
-        "examples_list": [
-            "Who earns the most in Engineering?",
-            "What is the average salary by department?",
+        "export_feedback": "Export feedback",
+        "details": "Query details",
+        "clarify": "Clarification needed",
+        "rejected": "Request declined",
+        "recorded": "Recorded demo",
+        "live": "Live",
+        "unauthorized": "The internal API authentication is not configured correctly.",
+        "rate_limited": "Too many requests. Wait a moment and try again.",
+        "unavailable": "The database agent is not ready yet.",
+        "request_failed": "The request could not be completed. Please try again.",
+        "no_result": "No verified database result was returned.",
+        "restricted": "This request includes data blocked by the privacy policy.",
+        "unsafe": "Database modifications are not allowed.",
+        "connection_failed": "The backend is unavailable. Please try again.",
+        "examples": [
             "Which projects have the highest budget?",
+            "What is the average annual gross salary by department?",
+            "Who earns the most in Engineering?",
+        ],
+    },
+    "de": {
+        "workspace": "Arbeitsbereich",
+        "ask": "DataBridge fragen",
+        "schema": "Datenbankschema",
+        "new": "Neuer Chat",
+        "popular": "Beispielfragen",
+        "recent": "Letzte Chats",
+        "no_chats": "Noch keine Unterhaltungen",
+        "session": "Diese Sitzung",
+        "connected": "Verbunden",
+        "offline": "Nicht erreichbar",
+        "readonly": "Nur Lesezugriff",
+        "database": "Datenbank",
+        "tables": "Tabellen",
+        "columns": "Spalten",
+        "refresh": "Schema aktualisieren",
+        "search": "Tabelle suchen",
+        "no_tables": "Keine passenden Tabellen",
+        "schema_error": "Das Datenbankschema ist nicht erreichbar.",
+        "input": "Stelle eine Frage zu deinen Daten...",
+        "reply": "Deine Präzisierung...",
+        "working": "Datenbank wird abgefragt...",
+        "welcome": "Eine neue Unterhaltung mit deinen Daten.",
+        "empty": "Noch keine Abfrageergebnisse",
+        "you": "Du",
+        "result": "Abfrageergebnis",
+        "table": "Tabelle",
+        "chart": "Diagramm",
+        "sql": "SQL",
+        "download": "CSV herunterladen",
+        "no_rows": "Diese Abfrage hat keine Zeilen zurückgegeben.",
+        "rows": "Zeilen",
+        "truncated": "Ergebnislimit erreicht",
+        "correct": "Als korrekt bewerten",
+        "incorrect": "Als falsch bewerten",
+        "feedback_saved": "Feedback gespeichert",
+        "feedback_failed": "Feedback konnte nicht gespeichert werden.",
+        "export_feedback": "Feedback exportieren",
+        "details": "Abfragedetails",
+        "clarify": "Rückfrage",
+        "rejected": "Anfrage abgelehnt",
+        "recorded": "Aufgezeichnete Demo",
+        "live": "Live",
+        "unauthorized": "Die interne API-Authentifizierung ist falsch konfiguriert.",
+        "rate_limited": "Zu viele Anfragen. Bitte warte kurz und versuche es erneut.",
+        "unavailable": "Der Datenbank-Agent ist noch nicht bereit.",
+        "request_failed": "Die Anfrage ist fehlgeschlagen. Bitte erneut versuchen.",
+        "no_result": "Es wurde kein verifiziertes Datenbankergebnis zurückgegeben.",
+        "restricted": "Die Datenschutzrichtlinie sperrt die angefragten Daten.",
+        "unsafe": "Datenbankänderungen sind nicht erlaubt.",
+        "connection_failed": "Das Backend ist nicht erreichbar.",
+        "examples": [
+            "Welche Projekte haben das höchste Budget?",
+            "Wie hoch ist das durchschnittliche Bruttojahresgehalt pro Abteilung?",
+            "Wer verdient am meisten im Engineering?",
         ],
     },
 }
 
-BACKEND_URL = os.environ.get("BACKEND_URL", "http://databridge_api:8000/api/v1/query")
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/api/v1/query")
 BACKEND_SCHEMA_URL = os.environ.get(
-    "BACKEND_SCHEMA_URL",
-    BACKEND_URL.replace("/api/v1/query", "/api/v1/schema"),
+    "BACKEND_SCHEMA_URL", BACKEND_URL.replace("/api/v1/query", "/api/v1/schema")
 )
 BACKEND_FEEDBACK_URL = os.environ.get(
-    "BACKEND_FEEDBACK_URL",
-    BACKEND_URL.replace("/api/v1/query", "/api/v1/feedback"),
+    "BACKEND_FEEDBACK_URL", BACKEND_URL.replace("/api/v1/query", "/api/v1/feedback")
 )
-BACKEND_FEEDBACK_EXPORT_URL = f"{BACKEND_FEEDBACK_URL}/export"
 APP_SECRET_TOKEN = os.environ.get("APP_SECRET_TOKEN")
 APP_MODE = os.environ.get("APP_MODE", "live").strip().casefold()
 
@@ -177,10 +152,7 @@ if not APP_SECRET_TOKEN:
 
 
 def api_headers() -> dict[str, str]:
-    return {
-        "Content-Type": "application/json",
-        "X-API-Key": APP_SECRET_TOKEN,
-    }
+    return {"Content-Type": "application/json", "X-API-Key": APP_SECRET_TOKEN}
 
 
 @st.cache_data(ttl=60)
@@ -195,354 +167,425 @@ def load_schema(refresh: bool = False) -> list[dict]:
     return response.json()
 
 
-def execution_frame(execution: dict) -> pd.DataFrame:
-    return pd.DataFrame(
-        execution.get("rows", []),
-        columns=execution.get("columns", []),
-    )
+def new_conversation() -> None:
+    conversation_id = uuid4().hex
+    st.session_state.conversations[conversation_id] = {"messages": [], "title": ""}
+    st.session_state.active_conversation = conversation_id
+    # Keep conversation content in this browser session, with bounded memory.
+    while len(st.session_state.conversations) > 12:
+        oldest = next(iter(st.session_state.conversations))
+        del st.session_state.conversations[oldest]
 
 
 def chart_columns(frame: pd.DataFrame) -> tuple[str, str] | None:
     if len(frame.index) < 2:
         return None
-    numeric_columns = [
-        column for column in frame.columns if is_numeric_dtype(frame[column])
-    ]
-    label_columns = [
-        column for column in frame.columns if column not in numeric_columns
-    ]
-    if not numeric_columns or not label_columns:
-        return None
-    return label_columns[0], numeric_columns[0]
+    numeric = [column for column in frame.columns if is_numeric_dtype(frame[column])]
+    labels = [column for column in frame.columns if column not in numeric]
+    return (labels[0], numeric[0]) if labels and numeric else None
 
 
 def submit_query_feedback(question: str, generated_sql: str, rating: str) -> None:
     response = requests.post(
         BACKEND_FEEDBACK_URL,
-        json={
-            "question": question,
-            "generated_sql": generated_sql,
-            "feedback": rating,
-        },
+        json={"question": question, "generated_sql": generated_sql, "feedback": rating},
         headers=api_headers(),
         timeout=10,
     )
     response.raise_for_status()
 
 
-def load_feedback_export() -> bytes:
-    response = requests.get(
-        BACKEND_FEEDBACK_EXPORT_URL,
-        headers=api_headers(),
-        timeout=10,
+def render_execution(execution: dict, message_index: int, execution_index: int) -> None:
+    frame = pd.DataFrame(
+        execution.get("rows", []), columns=execution.get("columns", [])
     )
-    response.raise_for_status()
-    return response.content
-
-
-def render_execution(
-    execution: dict,
-    *,
-    execution_index: int,
-    message_index: int,
-    labels: dict,
-) -> None:
-    row_count = execution.get("row_count", 0)
-    row_label = f"{row_count} {labels['rows']}"
-    if execution.get("truncated"):
-        row_label += "+"
-    duration = execution.get("duration_ms", 0)
-    title = f"Query {execution_index} · {row_label} · {duration} ms"
-    frame = execution_frame(execution)
     chart = chart_columns(frame)
-
-    with st.expander(title):
-        tab_names = [labels["table"]]
-        if chart:
-            tab_names.append(labels["chart"])
-        tab_names.append(labels["sql"])
-        tabs = st.tabs(tab_names)
-
-        with tabs[0]:
-            if frame.empty:
-                st.info(labels["no_rows"])
-            else:
-                st.dataframe(frame, hide_index=True, width="stretch")
-                st.download_button(
-                    labels["download"],
-                    data=rows_to_csv(
-                        frame.columns,
-                        frame.itertuples(index=False, name=None),
-                    ),
-                    file_name=f"databridge-query-{execution_index}.csv",
-                    mime="text/csv",
-                    key=f"download-{message_index}-{execution_index}",
-                    icon=":material/download:",
-                    on_click="ignore",
-                )
-            if execution.get("truncated"):
-                st.caption(labels["truncated"])
-
-        sql_tab_index = 2 if chart else 1
-        if chart:
-            with tabs[1]:
-                label_column, value_column = chart
-                st.bar_chart(
-                    frame,
-                    x=label_column,
-                    y=value_column,
-                    color="#0B7A75",
-                    width="stretch",
-                )
-
-        with tabs[sql_tab_index]:
-            st.code(execution.get("sql", ""), language="sql")
-
-
-def render_assistant_message(message: dict, message_index: int, labels: dict) -> None:
-    st.markdown(message["content"])
-    for execution_index, execution in enumerate(message.get("executions", []), start=1):
-        render_execution(
-            execution,
-            execution_index=execution_index,
-            message_index=message_index,
-            labels=labels,
+    rows = int(execution.get("row_count", len(frame)))
+    duration = float(execution.get("duration_ms", 0))
+    st.markdown(
+        f'<div class="db-result-heading"><strong>{labels["result"]}</strong>'
+        f"<span>{rows} {labels['rows']} &middot; {duration:g} ms</span></div>",
+        unsafe_allow_html=True,
+    )
+    names = [f":material/table: {labels['table']}"]
+    if chart:
+        names.append(f":material/bar_chart: {labels['chart']}")
+    names.append(":material/code: SQL")
+    tabs = st.tabs(names)
+    with tabs[0]:
+        if frame.empty:
+            st.info(labels["no_rows"])
+        else:
+            st.dataframe(frame, hide_index=True, width="stretch")
+    if chart:
+        with tabs[1]:
+            label_column, value_column = chart
+            st.bar_chart(
+                frame,
+                x=label_column,
+                y=value_column,
+                horizontal=True,
+                color="#438b70",
+                height=280,
+                width="stretch",
+            )
+    with tabs[-1]:
+        st.code(execution.get("sql", ""), language="sql")
+    with st.container(horizontal=True, vertical_alignment="center"):
+        st.download_button(
+            labels["download"],
+            data=rows_to_csv(frame.columns, frame.itertuples(index=False, name=None)),
+            file_name=f"databridge-query-{execution_index}.csv",
+            mime="text/csv",
+            key=f"download-{st.session_state.active_conversation}-{message_index}-{execution_index}",
+            icon=":material/download:",
+            type="tertiary",
+            on_click="ignore",
         )
-    metadata = []
-    if message.get("duration_ms"):
-        metadata.append(f"{message['duration_ms']} ms")
-    if message.get("model_duration_ms"):
-        metadata.append(f"model {message['model_duration_ms']} ms")
-    if message.get("tool_call_count"):
-        metadata.append(f"{message['tool_call_count']} tools")
-    token_count = message.get("input_tokens", 0) + message.get("output_tokens", 0)
-    if token_count:
-        metadata.append(f"{token_count} tokens")
-    if message.get("request_id"):
-        metadata.append(f"request {message['request_id'][:8]}")
-    if metadata:
-        st.caption(" · ".join(metadata))
+        if execution.get("truncated"):
+            st.caption(labels["truncated"])
 
+
+def render_feedback(message: dict, message_index: int) -> None:
     executions = message.get("executions", [])
-    question = message.get("question")
-    if not executions or not question:
+    if not executions or not message.get("question"):
         return
     if message.get("feedback"):
-        st.caption(labels["feedback_saved"])
+        st.caption(f":material/check: {labels['feedback_saved']}")
         return
-
-    correct_column, incorrect_column, _ = st.columns([1, 1, 4])
-    selected_rating = None
-    with correct_column:
-        if st.button(
-            labels["correct"],
-            icon=":material/thumb_up:",
-            key=f"feedback-correct-{message_index}",
-            width="stretch",
+    with st.container(horizontal=True, vertical_alignment="center"):
+        rating = None
+        for value, icon, help_text in (
+            ("correct", "thumb_up", labels["correct"]),
+            ("incorrect", "thumb_down", labels["incorrect"]),
         ):
-            selected_rating = "correct"
-    with incorrect_column:
-        if st.button(
-            labels["incorrect"],
-            icon=":material/thumb_down:",
-            key=f"feedback-incorrect-{message_index}",
-            width="stretch",
-        ):
-            selected_rating = "incorrect"
+            if st.button(
+                "",
+                icon=f":material/{icon}:",
+                help=help_text,
+                type="tertiary",
+                key=f"feedback-{value}-{st.session_state.active_conversation}-{message_index}",
+            ):
+                rating = value
+        if rating:
+            try:
+                submit_query_feedback(
+                    message["question"], executions[-1]["sql"], rating
+                )
+                message["feedback"] = rating
+                st.rerun()
+            except requests.RequestException:
+                st.warning(labels["feedback_failed"])
+        with st.popover("", icon=":material/info:", help=labels["details"]):
+            st.caption(labels["details"])
+            for name in (
+                "duration_ms",
+                "model_duration_ms",
+                "tool_call_count",
+                "input_tokens",
+                "output_tokens",
+                "request_id",
+            ):
+                if message.get(name) is not None:
+                    st.text(f"{name}: {message[name]}")
 
-    if selected_rating:
-        try:
-            submit_query_feedback(
-                question,
-                executions[-1].get("sql", ""),
-                selected_rating,
+
+def render_message(message: dict, index: int) -> None:
+    is_user = message["role"] == "user"
+    avatar = None if is_user else ":material/auto_awesome:"
+    with st.chat_message(message["role"], avatar=avatar):
+        name = labels["you"] if is_user else "DataBridge AI"
+        st.markdown(
+            f'<div class="db-message-label">{name}</div>', unsafe_allow_html=True
+        )
+        if message.get("status") == "clarification_required":
+            st.caption(f":material/help: {labels['clarify']}")
+        if message.get("status") == "error":
+            st.warning(message["content"])
+        else:
+            st.markdown(message["content"])
+        for execution_index, execution in enumerate(message.get("executions", []), 1):
+            render_execution(execution, index, execution_index)
+        render_feedback(message, index)
+
+
+def request_answer(prompt: str, conversation: dict) -> None:
+    messages = conversation["messages"]
+    user_message = {"role": "user", "content": prompt, "accepted_for_context": False}
+    history = [
+        f"{'User' if item['role'] == 'user' else 'Assistant'}: {item['content']}"
+        for item in messages[-6:]
+        if item.get("accepted_for_context", False)
+    ]
+    messages.append(user_message)
+    if not conversation["title"]:
+        conversation["title"] = prompt
+    answer = {"role": "assistant", "status": "error", "accepted_for_context": False}
+    try:
+        response = requests.post(
+            BACKEND_URL,
+            json={
+                "question": prompt,
+                "chat_history": "\n".join(history)[-4000:],
+                "language": language,
+            },
+            headers=api_headers(),
+            timeout=120,
+        )
+        if response.status_code == 200:
+            payload = response.json()
+            user_message["accepted_for_context"] = True
+            answer.update(
+                content=payload.get("answer", labels["request_failed"]),
+                status=payload.get("status", "answered"),
+                accepted_for_context=True,
+                question=prompt,
+                executions=payload.get("executions", []),
             )
-            message["feedback"] = selected_rating
-            st.rerun()
-        except requests.RequestException:
-            st.warning(labels["feedback_failed"])
+            for field in (
+                "duration_ms",
+                "model_duration_ms",
+                "tool_call_count",
+                "input_tokens",
+                "output_tokens",
+                "request_id",
+            ):
+                if field in payload:
+                    answer[field] = payload[field]
+        else:
+            error_key = {
+                401: "unauthorized",
+                429: "rate_limited",
+                502: "no_result",
+                503: "unavailable",
+            }.get(response.status_code, "request_failed")
+            if response.status_code == 403:
+                try:
+                    detail = str(response.json().get("detail", "")).casefold()
+                except requests.JSONDecodeError:
+                    detail = ""
+                error_key = (
+                    "unsafe"
+                    if "modification" in detail or "änderung" in detail
+                    else "restricted"
+                )
+            answer["content"] = labels[error_key]
+    except (requests.RequestException, ValueError):
+        answer["content"] = labels["connection_failed"]
+    messages.append(answer)
 
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+def render_schema(tables: list[dict]) -> None:
+    search = st.text_input(
+        labels["search"],
+        placeholder=labels["search"],
+        icon=":material/search:",
+        label_visibility="collapsed",
+        key="schema-search",
+    ).casefold()
+    selected = [table for table in tables if search in table["name"].casefold()]
+    if not selected:
+        st.info(labels["no_tables"])
+    for table in selected:
+        columns = table.get("columns", [])
+        with st.expander(
+            f"{table.get('schema', 'public')}.{table['name']}"
+            f" · {len(columns)} {labels['columns']}",
+            expanded=len(selected) == 1,
+            icon=":material/table:",
+        ):
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "Column": column["name"],
+                            "Type": column["type"],
+                            "Key": ", ".join(column.get("flags", [])),
+                            "Nullable": column.get("nullable", True),
+                        }
+                        for column in columns
+                    ]
+                ),
+                hide_index=True,
+                width="stretch",
+            )
+
+
+if "conversations" not in st.session_state:
+    st.session_state.conversations = {}
+    new_conversation()
+if "view" not in st.session_state:
+    st.session_state.view = "chat"
 
 with st.sidebar:
-    st.title("DataBridge AI")
+    st.markdown(
+        '<div class="db-brand">DataBridge<span> AI</span></div>'
+        '<div class="db-brand-sub">POSTGRESQL WORKSPACE</div>',
+        unsafe_allow_html=True,
+    )
     language = st.segmented_control(
         "Language / Sprache",
         options=["de", "en"],
         default="de",
-        format_func=lambda value: value.upper(),
+        format_func=str.upper,
         key="language",
         required=True,
         width="stretch",
+        label_visibility="collapsed",
     )
     labels = TEXT[language]
-    st.caption(labels["tagline"])
-    if APP_MODE == "recorded":
-        st.caption(labels["recorded_mode"])
-
+    st.space("small")
+    for view, title, icon in (
+        ("chat", labels["ask"], "chat_bubble_outline"),
+        ("schema", labels["schema"], "table_view"),
+    ):
+        if st.button(
+            title,
+            icon=f":material/{icon}:",
+            key=f"nav-{view}",
+            type="primary" if st.session_state.view == view else "tertiary",
+            width="stretch",
+        ):
+            st.session_state.view = view
+            st.rerun()
+    if st.button(labels["new"], icon=":material/add:", key="new-chat", width="stretch"):
+        new_conversation()
+        st.session_state.view = "chat"
+        st.rerun()
     st.divider()
-    database_heading, refresh_column = st.columns([3, 2])
-    with database_heading:
-        st.markdown(f"#### {labels['database']}")
-    with refresh_column:
-        refresh_schema = st.button(
-            labels["refresh"],
+    with st.container(key="recent-chats"):
+        st.caption(labels["recent"])
+        recent = [
+            (key, value)
+            for key, value in st.session_state.conversations.items()
+            if value["title"]
+        ]
+        if not recent:
+            st.caption(labels["no_chats"])
+        for conversation_id, item in reversed(recent):
+            if st.button(
+                item["title"],
+                help=item["title"],
+                key=f"conversation-{conversation_id}",
+                type="secondary"
+                if conversation_id == st.session_state.active_conversation
+                else "tertiary",
+                width="stretch",
+            ):
+                st.session_state.active_conversation = conversation_id
+                st.session_state.view = "chat"
+                st.rerun()
+    st.divider()
+    with st.container(horizontal=True, vertical_alignment="center"):
+        st.caption(labels["database"])
+        refresh = st.button(
+            "",
             icon=":material/refresh:",
             help=labels["refresh"],
-            type="tertiary",
             key="refresh-schema",
+            type="tertiary",
         )
-    if refresh_schema:
+    if refresh:
         load_schema.clear()
-
     try:
-        schema_tables = load_schema(refresh_schema)
-        st.markdown(
-            f"""
-            <div class="db-status">
-                <span class="db-status-dot"></span>
-                <span>{labels["connected"]}</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown(f"#### {labels['schema']}")
-        for table in schema_tables:
-            with st.expander(table["name"]):
-                lines = []
-                for column in table["columns"]:
-                    flags = (
-                        f" ({', '.join(column['flags'])})" if column["flags"] else ""
-                    )
-                    nullable = "" if column["nullable"] else " NOT NULL"
-                    lines.append(f"{column['name']} {column['type']}{flags}{nullable}")
-                st.code("\n".join(lines))
-    except requests.RequestException:
-        st.warning(labels["schema_error"])
-
+        schema_tables = load_schema(refresh)
+        connected = True
+    except (requests.RequestException, ValueError):
+        schema_tables = []
+        connected = False
+    connection_state = labels["connected"] if connected else labels["offline"]
+    connection_class = "db-connected" if connected else "db-offline"
+    st.markdown(
+        '<div class="db-connection"><strong>PostgreSQL</strong>'
+        f'<div class="{connection_class}">{connection_state}</div>'
+        f"<div>{labels['readonly']} &middot; "
+        f"{len(schema_tables)} {labels['tables']}</div></div>",
+        unsafe_allow_html=True,
+    )
     st.divider()
     if st.button(
-        labels["clear"],
-        icon=":material/delete:",
+        labels["export_feedback"],
+        icon=":material/download:",
+        key="prepare-feedback",
+        type="tertiary",
         width="stretch",
-        key="clear-chat",
     ):
-        st.session_state.messages = []
-        st.rerun()
-
-    st.divider()
-    st.markdown(f"#### {labels['feedback']}")
-    try:
-        feedback_export = load_feedback_export()
+        try:
+            response = requests.get(
+                f"{BACKEND_FEEDBACK_URL}/export",
+                headers=api_headers(),
+                timeout=10,
+            )
+            response.raise_for_status()
+            st.session_state.feedback_export = response.content
+        except requests.RequestException:
+            st.warning(labels["feedback_failed"])
+    if "feedback_export" in st.session_state:
         st.download_button(
-            labels["export_feedback"],
-            data=feedback_export,
+            "JSONL",
+            data=st.session_state.feedback_export,
             file_name="databridge-reviewed-examples.jsonl",
             mime="application/x-ndjson",
             icon=":material/download:",
-            width="stretch",
-            key="export-feedback",
             on_click="ignore",
+            key="export-feedback",
         )
-    except requests.RequestException:
-        st.caption(labels["feedback_failed"])
+    st.caption(labels["recorded"] if APP_MODE == "recorded" else "Gemini")
 
-st.title("DataBridge AI")
-st.caption(labels["tagline"])
+mode = labels["recorded"] if APP_MODE == "recorded" else labels["live"]
+view_title = labels["ask"] if st.session_state.view == "chat" else labels["schema"]
+st.markdown(
+    f'<div class="db-heading"><h1>{view_title}</h1>'
+    f'<span class="db-mode">{mode}</span></div>',
+    unsafe_allow_html=True,
+)
+if not connected:
+    st.warning(labels["schema_error"])
 
-st.markdown(f"#### {labels['examples']}")
-example_columns = st.columns(3)
-selected_example = None
-for index, question in enumerate(labels["examples_list"]):
-    with example_columns[index]:
-        if st.button(
-            question,
-            key=f"example-{language}-{index}",
-            width="stretch",
-        ):
-            selected_example = question
-
-for message_index, message in enumerate(st.session_state.messages):
-    with st.chat_message(message["role"]):
-        if message["role"] == "assistant":
-            render_assistant_message(message, message_index, labels)
-        else:
-            st.markdown(message["content"])
-
-typed_prompt = st.chat_input(labels["input"])
-prompt = selected_example or typed_prompt
-if prompt:
-    user_message = {
-        "role": "user",
-        "content": prompt,
-        "accepted_for_context": False,
-    }
-    st.session_state.messages.append(user_message)
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    history_lines = []
-    for message in st.session_state.messages[:-1][-6:]:
-        if not message.get("accepted_for_context", True):
-            continue
-        role = "User" if message["role"] == "user" else "Assistant"
-        history_lines.append(f"{role}: {message['content']}")
-    history = "\n".join(history_lines)[-4000:]
-
-    with st.chat_message("assistant"), st.spinner(labels["working"]):
-        try:
-            response = requests.post(
-                BACKEND_URL,
-                json={
-                    "question": prompt,
-                    "chat_history": history,
-                    "language": language,
-                },
-                headers=api_headers(),
-                timeout=120,
-            )
-            if response.status_code == 200:
-                payload = response.json()
-                user_message["accepted_for_context"] = True
-                assistant_message = {
-                    "role": "assistant",
-                    "accepted_for_context": True,
-                    "content": payload.get("answer", labels["request_failed"]),
-                    "executions": payload.get("executions", []),
-                    "duration_ms": payload.get("duration_ms", 0),
-                    "request_id": payload.get("request_id", ""),
-                    "model_duration_ms": payload.get("model_duration_ms", 0),
-                    "tool_call_count": payload.get("tool_call_count", 0),
-                    "input_tokens": payload.get("input_tokens", 0),
-                    "output_tokens": payload.get("output_tokens", 0),
-                    "question": prompt,
-                }
-                st.session_state.messages.append(assistant_message)
-                render_assistant_message(
-                    assistant_message,
-                    len(st.session_state.messages) - 1,
-                    labels,
+if st.session_state.view == "schema":
+    render_schema(schema_tables)
+else:
+    selected_example = None
+    conversation = st.session_state.conversations[st.session_state.active_conversation]
+    messages = conversation["messages"]
+    with st.container(key="chat-surface", border=True):
+        title = conversation["title"] or labels["new"]
+        st.markdown(
+            f'<div class="db-chat-title">{escape(title)}</div>',
+            unsafe_allow_html=True,
+        )
+        with st.container(height=500, border=False, key="chat-log", autoscroll=True):
+            if not messages:
+                st.markdown(
+                    f'<div class="db-empty"><span class="db-empty-mark">DB</span>'
+                    f"<h2>{labels['welcome']}</h2><p>{labels['empty']}</p></div>",
+                    unsafe_allow_html=True,
                 )
-            elif response.status_code == 401:
-                st.error(labels["unauthorized"])
-            elif response.status_code == 403:
-                try:
-                    detail = str(response.json().get("detail", ""))
-                except requests.JSONDecodeError:
-                    detail = ""
-                message = (
-                    labels["unsafe"]
-                    if "modification" in detail or "änderung" in detail.casefold()
-                    else labels["restricted"]
-                )
-                st.warning(message)
-            elif response.status_code == 429:
-                st.warning(labels["rate_limited"])
-            elif response.status_code == 503:
-                st.warning(labels["unavailable"])
-            else:
-                st.error(labels["request_failed"])
-        except requests.RequestException:
-            st.error(labels["connection_failed"])
+                with st.container(key="suggestions"):
+                    for index, question in enumerate(labels["examples"]):
+                        if st.button(
+                            question,
+                            key=f"example-{index}",
+                            type="tertiary",
+                            icon=":material/arrow_outward:",
+                            width="stretch",
+                        ):
+                            selected_example = question
+            for index, message in enumerate(messages):
+                render_message(message, index)
+            if selected_example:
+                with st.spinner(labels["working"]):
+                    request_answer(selected_example, conversation)
+                st.rerun()
+        is_clarification = (
+            messages and messages[-1].get("status") == "clarification_required"
+        )
+        prompt = st.chat_input(
+            labels["reply"] if is_clarification else labels["input"],
+            key=f"composer-{st.session_state.active_conversation}",
+            max_chars=2000,
+        )
+        if prompt:
+            with st.spinner(labels["working"]):
+                request_answer(prompt, conversation)
+            st.rerun()

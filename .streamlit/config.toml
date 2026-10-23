@@ -9,8 +9,8 @@ headless = true
 
 [theme]
 base = "light"
-primaryColor = "#0B7A75"
-backgroundColor = "#F5F7F9"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#18232D"
+primaryColor = "#18745A"
+backgroundColor = "#FBFCFB"
+secondaryBackgroundColor = "#F0F4F1"
+textColor = "#232B28"
 font = "sans-serif"
