@@ -136,7 +136,7 @@ html, body, h1, h2, h3, h4, p, button, input, textarea {
 [data-testid="stAlert"] { border-radius: 6px; }
 
 @media (min-width: 768px) {
-    [data-testid="stSidebar"][aria-expanded="true"] { width: 260px !important; min-width: 260px; max-width: 260px; }
+    [data-testid="stSidebar"][data-collapsed="false"] { width: 260px !important; min-width: 260px; max-width: 260px; }
 }
 @media (max-width: 1100px) and (min-width: 768px) {
     [data-testid="stMainBlockContainer"] { padding: 2rem 1.2rem 1rem; }

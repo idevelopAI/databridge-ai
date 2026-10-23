@@ -1,3 +1,4 @@
 pandas==3.0.3
+pillow==13.0.0
 requests==2.34.2
-streamlit==1.59.2
+streamlit==1.66.1
