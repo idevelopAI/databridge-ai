@@ -67,6 +67,7 @@ TEXT = {
         "rate_limited": "Too many requests. Wait a moment and try again.",
         "unavailable": "The database agent is not ready yet.",
         "request_failed": "The request could not be completed. Please try again.",
+        "invalid_question": "Enter a question between 1 and 1,000 characters.",
         "no_result": "No verified database result was returned.",
         "restricted": "This request includes data blocked by the privacy policy.",
         "unsafe": "Database modifications are not allowed.",
@@ -124,6 +125,7 @@ TEXT = {
         "rate_limited": "Zu viele Anfragen. Bitte warte kurz und versuche es erneut.",
         "unavailable": "Der Datenbank-Agent ist noch nicht bereit.",
         "request_failed": "Die Anfrage ist fehlgeschlagen. Bitte erneut versuchen.",
+        "invalid_question": "Bitte gib eine Frage mit 1 bis 1.000 Zeichen ein.",
         "no_result": "Es wurde kein verifiziertes Datenbankergebnis zurückgegeben.",
         "restricted": "Die Datenschutzrichtlinie sperrt die angefragten Daten.",
         "unsafe": "Datenbankänderungen sind nicht erlaubt.",
@@ -355,6 +357,7 @@ def request_answer(prompt: str, conversation: dict) -> None:
         else:
             error_key = {
                 401: "unauthorized",
+                422: "invalid_question",
                 429: "rate_limited",
                 502: "no_result",
                 503: "unavailable",
@@ -583,7 +586,7 @@ else:
         prompt = st.chat_input(
             labels["reply"] if is_clarification else labels["input"],
             key=f"composer-{st.session_state.active_conversation}",
-            max_chars=2000,
+            max_chars=1000,
         )
         if prompt:
             with st.spinner(labels["working"]):

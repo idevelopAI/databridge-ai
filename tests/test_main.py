@@ -98,6 +98,23 @@ def test_query_validates_whitespace_only_question(monkeypatch):
     assert response.status_code == 422
 
 
+def test_query_rejects_overlong_question_before_agent(monkeypatch):
+    monkeypatch.setenv("APP_SECRET_TOKEN", "length-limit-token")
+
+    def unexpected_agent():
+        raise AssertionError("Invalid questions must not initialize the agent")
+
+    monkeypatch.setattr(main, "get_agent_executor", unexpected_agent)
+    response = client.post(
+        "/api/v1/query",
+        json={"question": "x" * 1001},
+        headers={"X-API-Key": "length-limit-token"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "question"]
+
+
 def test_query_rejects_agent_answer_without_verified_execution(monkeypatch):
     monkeypatch.setenv("APP_SECRET_TOKEN", "correct-token")
     monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "100")
