@@ -2,6 +2,20 @@
 
 All notable changes are documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- Aligned the chat input with the API's 1,000-character question limit and added
+  an actionable validation message
+- Preserved original questions and accepted clarification replies in reviewed
+  feedback, without including unrelated history or rejected messages
+
+### Removed
+
+- Demo video and timed recording script; screenshots and a text walkthrough
+  remain available in the interface guide
+
 ## 1.2.0 - 2026-07-27
 
 ### Added

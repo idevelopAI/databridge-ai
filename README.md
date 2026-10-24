@@ -65,7 +65,7 @@ database and query controls. [Architecture and API details](docs/reference.md).
 | Recorded result equivalence | 40/40 |
 | Unsafe-query rejection | 12/12 |
 | Live model accuracy | Not measured |
-| Automated tests | 140 passing |
+| Automated tests | 152 passing |
 | CI | Python 3.11–3.13, coverage, dependency audit, containers |
 
 Recorded results validate the application workflow; they are **not an LLM accuracy
