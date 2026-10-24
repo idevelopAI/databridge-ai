@@ -1,4 +1,4 @@
-pandas==3.0.3
+pandas==3.0.6
 pillow==13.0.0
 requests==2.34.2
 streamlit==1.66.1
