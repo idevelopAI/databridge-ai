@@ -23,7 +23,7 @@ measured inside the isolated recorded-mode Compose stack:
 | Recorded model tokens | 0 |
 | Recorded estimated cost/query | $0.000000 |
 | Live Gemini result equivalence | Not run |
-| Automated tests | 140 passed |
+| Automated tests | 152 passed |
 | Backend test coverage | 82% |
 
 Reproduce the recorded application-path measurement without a provider call:

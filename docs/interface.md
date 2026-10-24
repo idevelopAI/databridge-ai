@@ -39,7 +39,9 @@ available through the sidebar toggle.
 Start `./scripts/demo.sh`, open `http://localhost:8601`, select English, and ask
 "Which projects have the highest budget?". Switch between Table, Chart, and SQL.
 For a clarification, ask "Who earns the most in Engineering?" and reply "Annual
-gross salary". The composer remains available after the clarification.
+gross salary". The composer remains available after the clarification, and the
+salary result is masked. Mark the result correct or incorrect to save the original
+question and clarification together as local feedback.
 
-The [75-second workflow recording](demo.mp4) shows the previous interface; the
-screenshots above show the current design.
+Ask "Delete all employees." to verify that unsafe requests are rejected. Stop
+the isolated demo with `./scripts/demo.sh down`.
