@@ -79,6 +79,12 @@ exactly the question, final accepted SQL, and feedback value in a local SQLite
 file with mode `0600`. Answers, database rows, credentials, prompts without a
 rating, and telemetry are not persisted in the feedback database.
 
+For clarified requests, the question includes the original question and accepted
+user clarification replies. Unrelated conversation turns, clarification messages
+from the assistant, and rejected requests are excluded. The combined question is
+limited to 5,000 characters; longer clarification chains cannot be rated rather
+than being silently truncated.
+
 The backend stores feedback in the `feedback_data` Docker volume. Export reviewed
 examples from the sidebar or `GET /api/v1/feedback/export`; the JSONL export is
 suitable for review and later evaluation-dataset curation. `FEEDBACK_DB_PATH`

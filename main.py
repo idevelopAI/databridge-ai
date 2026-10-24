@@ -103,7 +103,7 @@ class QueryResponse(BaseModel):
 class FeedbackRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    question: str = Field(min_length=1, max_length=1000)
+    question: str = Field(min_length=1, max_length=5000)
     generated_sql: str = Field(min_length=1, max_length=20000)
     feedback: Literal["correct", "incorrect"]
 

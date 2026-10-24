@@ -6,7 +6,7 @@ import requests
 import streamlit as st
 from streamlit.testing.v1 import AppTest
 
-from main import QueryRequest
+from main import FeedbackRequest, QueryRequest
 
 SCHEMA = [
     {
@@ -164,6 +164,108 @@ def test_feedback_records_only_reviewed_question_and_sql(frontend):
         "generated_sql": ANSWER["executions"][0]["sql"],
         "feedback": "correct",
     }
+
+
+def test_clarified_feedback_preserves_only_the_relevant_user_questions(frontend):
+    app, _, post = frontend
+    app.chat_input[0].set_value("Show project budgets").run()
+    post.return_value = response(
+        {"answer": "Which department?", "status": "clarification_required"}
+    )
+    app.chat_input[0].set_value("Who earns the most in our department?").run()
+    post.return_value = response(
+        {"answer": "Annual or monthly salary?", "status": "clarification_required"}
+    )
+    app.chat_input[0].set_value("Engineering").run()
+    post.return_value = response(ANSWER)
+    app.chat_input[0].set_value("Annual gross salary").run()
+    active = app.session_state["active_conversation"]
+    app.button(key=f"feedback-correct-{active}-7").click().run()
+    assert not app.exception
+    assert post.call_args.kwargs["json"] == {
+        "question": (
+            "Who earns the most in our department?\n"
+            "Clarification: Engineering\nClarification: Annual gross salary"
+        ),
+        "generated_sql": ANSWER["executions"][0]["sql"],
+        "feedback": "correct",
+    }
+
+
+def test_clarified_feedback_excludes_intervening_rejected_messages(frontend):
+    app, _, post = frontend
+    post.return_value = response(
+        {"answer": "Annual or monthly salary?", "status": "clarification_required"}
+    )
+    app.chat_input[0].set_value("Who earns the most in Engineering?").run()
+    post.return_value = response(
+        {"detail": "Database modifications are not allowed"}, 403
+    )
+    app.chat_input[0].set_value("Delete every employee").run()
+    post.return_value = response(ANSWER)
+    app.chat_input[0].set_value("Annual gross salary").run()
+    active = app.session_state["active_conversation"]
+    app.button(key=f"feedback-correct-{active}-5").click().run()
+    assert not app.exception
+    assert post.call_args.kwargs["json"]["question"] == (
+        "Who earns the most in Engineering?\nClarification: Annual gross salary"
+    )
+
+
+@pytest.mark.parametrize("new_chat", [False, True])
+def test_new_question_does_not_inherit_completed_clarification(frontend, new_chat):
+    app, _, post = frontend
+    post.return_value = response(
+        {"answer": "Annual or monthly salary?", "status": "clarification_required"}
+    )
+    app.chat_input[0].set_value("Who earns the most in Engineering?").run()
+    post.return_value = response(ANSWER)
+    app.chat_input[0].set_value("Annual gross salary").run()
+    if new_chat:
+        app.button(key="new-chat").click().run()
+    app.chat_input[0].set_value("Show project budgets").run()
+    active = app.session_state["active_conversation"]
+    index = 1 if new_chat else 5
+    app.button(key=f"feedback-correct-{active}-{index}").click().run()
+    assert not app.exception
+    assert post.call_args.kwargs["json"]["question"] == "Show project budgets"
+
+
+def test_long_clarified_question_fits_feedback_contract(frontend):
+    app, _, post = frontend
+    post.return_value = response(
+        {"answer": "Please clarify", "status": "clarification_required"}
+    )
+    app.chat_input[0].set_value("x" * 1000).run()
+    post.return_value = response(ANSWER)
+    app.chat_input[0].set_value("y" * 1000).run()
+    active = app.session_state["active_conversation"]
+    app.button(key=f"feedback-correct-{active}-3").click().run()
+    assert not app.exception
+    payload = FeedbackRequest(**post.call_args.kwargs["json"])
+    assert payload.question == "x" * 1000 + "\nClarification: " + "y" * 1000
+
+
+def test_overlong_clarification_is_not_silently_truncated_in_feedback(frontend):
+    app, _, post = frontend
+    for index in range(6):
+        post.return_value = response(
+            ANSWER
+            if index == 5
+            else {"answer": "Please clarify", "status": "clarification_required"}
+        )
+        app.chat_input[0].set_value(str(index) * 1000).run()
+    assert not app.exception
+    active = app.session_state["active_conversation"]
+    assert (
+        app.session_state["conversations"][active]["messages"][-1]["question"] is None
+    )
+    assert not any(str(button.key).startswith("feedback-") for button in app.button)
+    assert any("Rückfragefolge zu lang" in caption.value for caption in app.caption)
+    assert len(app.chat_input) == 1
+    app.chat_input[0].set_value("Show project budgets").run()
+    assert not app.exception
+    assert app.button(key=f"feedback-correct-{active}-13")
 
 
 def test_backend_failure_keeps_an_actionable_chat(frontend):

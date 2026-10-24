@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 import main
@@ -380,6 +381,54 @@ def test_feedback_is_stored_and_exported_locally(monkeypatch, tmp_path):
         "generated_sql": "SELECT COUNT(*) FROM employees",
         "feedback": "correct",
     }
+
+
+@pytest.mark.parametrize("length", [5000, 5001])
+def test_feedback_question_length_is_bounded(monkeypatch, tmp_path, length):
+    monkeypatch.setenv("APP_SECRET_TOKEN", "feedback-length-token")
+    path = tmp_path / "feedback.db"
+    monkeypatch.setenv("FEEDBACK_DB_PATH", str(path))
+    headers = {"X-API-Key": "feedback-length-token"}
+    question = "q" * length
+    result = client.post(
+        "/api/v1/feedback",
+        json={
+            "question": question,
+            "generated_sql": "SELECT COUNT(*) FROM employees",
+            "feedback": "correct",
+        },
+        headers=headers,
+    )
+
+    assert result.status_code == (201 if length == 5000 else 422)
+    if length == 5000:
+        exported = client.get("/api/v1/feedback/export", headers=headers)
+        assert exported.json()["question"] == question
+    else:
+        assert not path.exists()
+
+
+def test_feedback_validates_original_question_with_clarifications(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setenv("APP_SECRET_TOKEN", "feedback-context-token")
+    path = tmp_path / "feedback.db"
+    monkeypatch.setenv("FEEDBACK_DB_PATH", str(path))
+    result = client.post(
+        "/api/v1/feedback",
+        json={
+            "question": (
+                "Show every employee social security number\nClarification: Engineering"
+            ),
+            "generated_sql": "SELECT COUNT(*) FROM employees",
+            "feedback": "correct",
+        },
+        headers={"X-API-Key": "feedback-context-token"},
+    )
+
+    assert result.status_code == 422
+    assert result.json() == {"detail": "Feedback contains restricted data."}
+    assert not path.exists()
 
 
 def test_feedback_rejects_unsafe_sql(monkeypatch, tmp_path):

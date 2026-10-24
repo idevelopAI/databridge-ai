@@ -57,6 +57,9 @@ TEXT = {
         "incorrect": "Mark incorrect",
         "feedback_saved": "Feedback saved",
         "feedback_failed": "Feedback could not be saved.",
+        "feedback_context_too_long": (
+            "Feedback is unavailable because this clarification chain is too long."
+        ),
         "export_feedback": "Export feedback",
         "details": "Query details",
         "clarify": "Clarification needed",
@@ -115,6 +118,9 @@ TEXT = {
         "incorrect": "Als falsch bewerten",
         "feedback_saved": "Feedback gespeichert",
         "feedback_failed": "Feedback konnte nicht gespeichert werden.",
+        "feedback_context_too_long": (
+            "Feedback ist nicht verfügbar, da diese Rückfragefolge zu lang ist."
+        ),
         "export_feedback": "Feedback exportieren",
         "details": "Abfragedetails",
         "clarify": "Rückfrage",
@@ -147,6 +153,7 @@ BACKEND_FEEDBACK_URL = os.environ.get(
 )
 APP_SECRET_TOKEN = os.environ.get("APP_SECRET_TOKEN")
 APP_MODE = os.environ.get("APP_MODE", "live").strip().casefold()
+MAX_FEEDBACK_QUESTION_LENGTH = 5000
 
 if not APP_SECRET_TOKEN:
     st.error("APP_SECRET_TOKEN is not configured for the frontend service.")
@@ -250,7 +257,10 @@ def render_execution(execution: dict, message_index: int, execution_index: int) 
 
 def render_feedback(message: dict, message_index: int) -> None:
     executions = message.get("executions", [])
-    if not executions or not message.get("question"):
+    if not executions:
+        return
+    if not message.get("question"):
+        st.caption(labels["feedback_context_too_long"])
         return
     if message.get("feedback"):
         st.caption(f":material/check: {labels['feedback_saved']}")
@@ -311,14 +321,29 @@ def render_message(message: dict, index: int) -> None:
         render_feedback(message, index)
 
 
+def feedback_question(prompt: str, context: list[dict]) -> str | None:
+    previous = next(
+        (item for item in reversed(context) if item["role"] == "assistant"), None
+    )
+    question = prompt
+    if previous and previous.get("status") == "clarification_required":
+        if not previous.get("question"):
+            return None
+        question = f"{previous['question']}\nClarification: {prompt}"
+    return question if len(question) <= MAX_FEEDBACK_QUESTION_LENGTH else None
+
+
 def request_answer(prompt: str, conversation: dict) -> None:
     messages = conversation["messages"]
     user_message = {"role": "user", "content": prompt, "accepted_for_context": False}
+    context = [
+        item for item in messages[-6:] if item.get("accepted_for_context", False)
+    ]
     history = [
         f"{'User' if item['role'] == 'user' else 'Assistant'}: {item['content']}"
-        for item in messages[-6:]
-        if item.get("accepted_for_context", False)
+        for item in context
     ]
+    reviewed_question = feedback_question(prompt, context)
     messages.append(user_message)
     if not conversation["title"]:
         conversation["title"] = prompt
@@ -341,7 +366,7 @@ def request_answer(prompt: str, conversation: dict) -> None:
                 content=payload.get("answer", labels["request_failed"]),
                 status=payload.get("status", "answered"),
                 accepted_for_context=True,
-                question=prompt,
+                question=reviewed_question,
                 executions=payload.get("executions", []),
             )
             for field in (
