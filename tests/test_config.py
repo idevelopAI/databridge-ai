@@ -1,4 +1,6 @@
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 
 from config import (
     get_database_url,
@@ -30,6 +32,36 @@ def test_database_url_prefers_explicit_url(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg2://example")
 
     assert get_database_url() == "postgresql+psycopg2://example"
+
+
+def test_plain_postgresql_url_uses_bundled_driver(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://readonly@localhost/demo")
+
+    engine = create_engine(get_database_url())
+    try:
+        assert engine.dialect.driver == "psycopg2"
+    finally:
+        engine.dispose()
+
+
+def test_database_url_normalization_preserves_credentials_and_options(monkeypatch):
+    original = (
+        "postgresql://read%40only:test%40password%2F%25@localhost:5433/demo"
+        "?sslmode=require&application_name=databridge"
+    )
+    monkeypatch.setenv("DATABASE_URL", original)
+
+    normalized = make_url(get_database_url())
+
+    assert normalized == make_url(original).set(drivername="postgresql+psycopg2")
+    assert normalized.password == "test@password/%"
+
+
+@pytest.mark.parametrize("url", ["sqlite:///:memory:", "postgresql+psycopg://example"])
+def test_database_url_preserves_explicit_driver(monkeypatch, url):
+    monkeypatch.setenv("DATABASE_URL", url)
+
+    assert get_database_url() == url
 
 
 def test_max_result_rows_uses_configured_positive_integer(monkeypatch):
