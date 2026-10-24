@@ -6,6 +6,8 @@ import requests
 import streamlit as st
 from streamlit.testing.v1 import AppTest
 
+from main import QueryRequest
+
 SCHEMA = [
     {
         "name": "projects",
@@ -64,6 +66,32 @@ def test_query_results_and_export_keep_composer_available(frontend):
     assert app.code[0].value == ANSWER["executions"][0]["sql"]
     assert post.call_args.kwargs["json"]["chat_history"] == ""
     assert not any(str(button.key).startswith("example-") for button in app.button)
+
+
+def test_question_length_matches_api_contract(frontend):
+    app, _, post = frontend
+    maximum = QueryRequest.model_json_schema()["properties"]["question"]["maxLength"]
+    assert app.chat_input[0].max_chars == maximum == 1000
+    question = "x" * maximum
+    assert QueryRequest(question=question).question == question
+    app.chat_input[0].set_value(question).run()
+    assert not app.exception
+    assert post.call_args.kwargs["json"]["question"] == question
+
+
+def test_validation_error_is_actionable_and_sanitized(frontend):
+    app, _, post = frontend
+    post.return_value = response({"detail": "private validation details"}, 422)
+    app.chat_input[0].set_value("   ").run()
+    assert not app.exception
+    assert app.warning[0].value == "Bitte gib eine Frage mit 1 bis 1.000 Zeichen ein."
+    assert len(app.chat_input) == 1
+    assert all(
+        not message["accepted_for_context"]
+        for message in app.session_state["conversations"][
+            app.session_state["active_conversation"]
+        ]["messages"]
+    )
 
 
 def test_clarification_can_be_answered_with_context(frontend):
