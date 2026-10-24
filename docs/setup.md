@@ -96,6 +96,10 @@ lists available non-system schemas, and creates initial glossary and privacy
 policy files for selected tables. It does not call Gemini, read table rows, use
 database comments, or print the connection URL or credentials.
 
+`DATABASE_URL` can override the individual database settings. Plain
+`postgresql://` URLs use the bundled `psycopg2` driver; explicit driver names
+are preserved. Credentials and connection options are retained.
+
 With the included Compose database running, execute the command from the local
 virtual environment and override the container hostname:
 

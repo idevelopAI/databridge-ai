@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import quote_plus
 
+from sqlalchemy.engine import make_url
+
 
 def require_env(name: str) -> str:
     value = os.environ.get(name)
@@ -26,6 +28,11 @@ def get_app_mode() -> Literal["live", "recorded"]:
 def get_database_url() -> str:
     explicit_url = os.environ.get("DATABASE_URL")
     if explicit_url:
+        url = make_url(explicit_url)
+        if url.drivername == "postgresql":
+            return url.set(drivername="postgresql+psycopg2").render_as_string(
+                hide_password=False
+            )
         return explicit_url
 
     db_host = os.environ.get("DB_HOST", "localhost")

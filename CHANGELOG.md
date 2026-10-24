@@ -4,8 +4,14 @@ All notable changes are documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Updated Python dependencies, pinned container base images, and GitHub Actions
+
 ### Fixed
 
+- Kept plain PostgreSQL connection URLs compatible with the bundled driver
+  after the SQLAlchemy 2.1 upgrade
 - Aligned the chat input with the API's 1,000-character question limit and added
   an actionable validation message
 - Preserved original questions and accepted clarification replies in reviewed
